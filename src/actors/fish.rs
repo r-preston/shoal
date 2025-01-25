@@ -1,6 +1,6 @@
 use crate::actors::Actor;
-use crate::Position;
-use crate::Velocity;
+use crate::utility::Position;
+use crate::utility::Velocity;
 
 pub struct Fish {
     m_position: Position,
@@ -10,8 +10,8 @@ pub struct Fish {
 impl Fish {
     pub fn new() -> Fish {
         Fish {
-            m_position: Position(0.0, 0.0, 0.0),
-            m_velocity: Velocity(0.0, 0.0, 0.0),
+            m_position: Position::new(0.0, 0.0, 0.0),
+            m_velocity: Velocity::new(0.0, 0.0, 0.0),
         }
     }
 }

@@ -1,26 +1,13 @@
 mod actors;
 mod camera;
 mod world;
+mod utility;
+mod renderer;
 
-type VelocityType = f32;
-type PositionType = f32;
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct Velocity(VelocityType, VelocityType, VelocityType);
-#[repr(C)]
-#[derive(Copy, Clone)]
-pub struct Position(PositionType, PositionType, PositionType);
-
-impl std::ops::AddAssign for Velocity {
-    fn add_assign(&mut self, rhs: Velocity) {
-        self.0 += rhs.0;
-        self.1 += rhs.1;
-        self.2 += rhs.2;
-    }
-}
 
 fn main() {
     let _world = world::World::new(100.0, 5, 10, 0);
+    renderer::run();    
 }
 
 /*

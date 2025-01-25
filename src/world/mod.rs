@@ -1,19 +1,13 @@
-/*
- world
-field
-- fish density field
-- fish velocity field???
-- shark density field
-*/
 pub mod field;
 
+use field::Field;
 use crate::actors::fish::Fish;
 use crate::actors::shark::Shark;
-use crate::Velocity;
-use field::Field;
+use crate::utility::Velocity;
+use crate::utility::PositionType;
 
 pub struct World {
-    radius: crate::PositionType,
+    radius: PositionType,
     fish: Vec<Fish>,
     sharks: Vec<Shark>,
     fish_density: Field<u32>,
@@ -23,7 +17,7 @@ pub struct World {
 
 impl World {
     pub fn new(
-        radius: crate::PositionType,
+        radius: PositionType,
         grid_size: u32,
         fish_count: usize,
         shark_count: usize,
@@ -34,7 +28,7 @@ impl World {
             sharks: Vec::new(),
             fish_density: Field::new(radius, grid_size, 0),
             shark_density: Field::new(radius, grid_size, 0),
-            fish_direction: Field::new(radius, grid_size, Velocity(0.0, 0.0, 0.0)),
+            fish_direction: Field::new(radius, grid_size, Velocity::new(0.0, 0.0, 0.0)),
         };
 
         for _n in 0..fish_count {

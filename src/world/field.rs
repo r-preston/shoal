@@ -1,5 +1,6 @@
-use crate::Position;
-use crate::PositionType;
+use crate::utility::Vector;
+use crate::utility::Position;
+use crate::utility::PositionType;
 
 pub struct Field<FieldType> {
     data: Vec<FieldType>,
@@ -22,6 +23,7 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
         };
         let vec_size = usize::try_from(divisions.pow(3)).unwrap();
         field.data.resize(vec_size, default_value);
+        field.data.shrink_to_fit();
         return field;
     }
 
@@ -39,9 +41,9 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
     }
 
     fn data_location(&self, pos: &Position) -> usize {
-        let x = (((pos.0 + self.size) * self.scale) + 0.5).floor() as u32;
-        let y = (((pos.1 + self.size) * self.scale) + 0.5).floor() as u32;
-        let z = (((pos.2 + self.size) * self.scale) + 0.5).floor() as u32;
+        let x = (((pos.x() + self.size) * self.scale) + 0.5).floor() as u32;
+        let y = (((pos.y() + self.size) * self.scale) + 0.5).floor() as u32;
+        let z = (((pos.z() + self.size) * self.scale) + 0.5).floor() as u32;
         return usize::try_from(x + (y * self.grid_size) + (z * self.grid_size * self.grid_size))
             .unwrap();
     }
