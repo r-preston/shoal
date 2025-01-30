@@ -1,4 +1,4 @@
-mod camera;
+pub mod camera;
 
 use winit::{
     window::Window,

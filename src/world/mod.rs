@@ -42,4 +42,8 @@ impl World {
         world.sharks.shrink_to_fit();
         return world;
     }
+
+    pub fn size(&self) -> PositionType {
+        self.radius
+    }
 }

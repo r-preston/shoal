@@ -14,7 +14,8 @@ use winit::{
     window::WindowBuilder,
 };
 
-use renderer::Renderer;
+use crate::utility::Position;
+use renderer::{Renderer, camera::Camera};
 use world::World;
 
 /*
@@ -40,14 +41,17 @@ fn main() {
 }
 
 struct State {
-    world: World
+    world: World,
+    camera: Camera
 }
 
 impl State {
 
 pub fn new(world: World) -> State {
+    let camera = Camera::new(Position::new(1.5*world.size(), 0.0, 0.0));
     Self {
-        world
+        world,
+        camera
     }
 }
 
