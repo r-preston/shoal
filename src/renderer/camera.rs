@@ -1,4 +1,5 @@
 use crate::utility::{Position, Velocity};
+use cgmath::InnerSpace;
 
 pub struct Camera {
     position: Position,
@@ -7,7 +8,7 @@ pub struct Camera {
 
 impl Camera {
     pub fn new(position: Position) -> Camera {
-        let direction = Velocity::new(-position.x().signum(), 0.0, 0.0);
+        let direction = Velocity::new(-position.x.signum(), 0.0, 0.0);
         Self {
             position,
             direction

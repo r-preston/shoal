@@ -1,4 +1,3 @@
-use crate::utility::Vector;
 use crate::utility::Position;
 use crate::utility::PositionType;
 
@@ -41,9 +40,9 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
     }
 
     fn data_location(&self, pos: &Position) -> usize {
-        let x = (((pos.x() + self.size) * self.scale) + 0.5).floor() as u32;
-        let y = (((pos.y() + self.size) * self.scale) + 0.5).floor() as u32;
-        let z = (((pos.z() + self.size) * self.scale) + 0.5).floor() as u32;
+        let x = (((pos.x + self.size) * self.scale) + 0.5).floor() as u32;
+        let y = (((pos.y + self.size) * self.scale) + 0.5).floor() as u32;
+        let z = (((pos.z + self.size) * self.scale) + 0.5).floor() as u32;
         return usize::try_from(x + (y * self.grid_size) + (z * self.grid_size * self.grid_size))
             .unwrap();
     }

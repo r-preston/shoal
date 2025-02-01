@@ -1,11 +1,11 @@
 pub mod fish;
 pub mod shark;
 
-use crate::utility::Vector;
 use crate::utility::Position;
 use crate::utility::Velocity;
 use crate::utility::PositionType;
 use crate::utility::VelocityType;
+use cgmath::InnerSpace;
 
 pub trait Actor {
     // return this Actor's position relative to the centre of the world
