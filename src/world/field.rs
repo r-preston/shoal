@@ -1,15 +1,14 @@
 use crate::utility::Position;
-use crate::utility::PositionType;
 
 pub struct Field<FieldType> {
     data: Vec<FieldType>,
     grid_size: u32,
-    size: PositionType,
-    scale: PositionType,
+    size: f32,
+    scale: f32,
 }
 
 impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
-    pub fn new(size: PositionType, divisions: u32, default_value: FieldType) -> Field<FieldType> {
+    pub fn new(size: f32, divisions: u32, default_value: FieldType) -> Field<FieldType> {
         let mut grid_size = divisions;
         if grid_size % 2 == 0 {
             grid_size += 1;

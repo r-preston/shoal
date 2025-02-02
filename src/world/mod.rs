@@ -1,13 +1,12 @@
 pub mod field;
 
-use field::Field;
 use crate::actors::fish::Fish;
 use crate::actors::shark::Shark;
 use crate::utility::Velocity;
-use crate::utility::PositionType;
+use field::Field;
 
 pub struct World {
-    radius: PositionType,
+    radius: f32,
     fish: Vec<Fish>,
     sharks: Vec<Shark>,
     fish_density: Field<u32>,
@@ -16,12 +15,7 @@ pub struct World {
 }
 
 impl World {
-    pub fn new(
-        radius: PositionType,
-        grid_size: u32,
-        fish_count: usize,
-        shark_count: usize,
-    ) -> World {
+    pub fn new(radius: f32, grid_size: u32, fish_count: usize, shark_count: usize) -> World {
         let mut world = World {
             radius,
             fish: Vec::new(),
@@ -43,7 +37,7 @@ impl World {
         return world;
     }
 
-    pub fn size(&self) -> PositionType {
+    pub fn size(&self) -> f32 {
         self.radius
     }
 }

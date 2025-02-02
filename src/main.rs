@@ -3,9 +3,9 @@
 #![allow(unused_variables)]
 
 mod actors;
-mod world;
-mod utility;
 mod renderer;
+mod utility;
+mod world;
 
 use winit::{
     event::*,
@@ -15,7 +15,7 @@ use winit::{
 };
 
 use crate::utility::Position;
-use renderer::{Renderer, camera::Camera};
+use renderer::{camera::Camera, Renderer};
 use world::World;
 
 /*
@@ -34,89 +34,83 @@ update predators using maps
 multiple density maps? fish vs threat
 */
 fn main() {
-    let mut state = State::new(
-        World::new(100.0, 5, 10, 0)
-    );
+    let mut state = State::new(World::new(100.0, 5, 10, 0));
     pollster::block_on(state.run());
 }
 
 struct State {
     world: World,
-    camera: Camera
+    camera: Camera,
 }
 
 impl State {
-
-pub fn new(world: World) -> State {
-    let camera = Camera::new(Position::new(1.5*world.size(), 0.0, 0.0));
-    Self {
-        world,
-        camera
+    pub fn new(world: World) -> State {
+        let camera = Camera::new(1.3 * world.size());
+        Self { world, camera }
     }
-}
 
-#[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
-pub async fn run(&mut self) {
-    env_logger::init();
+    #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
+    pub async fn run(&mut self) {
+        env_logger::init();
 
-    let event_loop = EventLoop::new().unwrap();
-    let window = WindowBuilder::new().build(&event_loop).unwrap();
-    let mut renderer = Renderer::new(&window).await;
+        let event_loop = EventLoop::new().unwrap();
+        let window = WindowBuilder::new().build(&event_loop).unwrap();
+        let mut renderer = Renderer::new(&window).await;
 
-    let _ = event_loop.run(move |event, control_flow| match event {
-        Event::WindowEvent {
-            ref event,
-            window_id,
-        } if window_id == renderer.window().id() => if !renderer.input(event) { 
-            match event {
-
-                WindowEvent::CloseRequested
-                | WindowEvent::KeyboardInput {
-                    event:
-                        KeyEvent {
-                            state: ElementState::Pressed,
-                            physical_key: PhysicalKey::Code(KeyCode::Escape),
+        let _ = event_loop.run(move |event, control_flow| match event {
+            Event::WindowEvent {
+                ref event,
+                window_id,
+            } if window_id == renderer.window().id() => {
+                if !renderer.input(event) {
+                    match event {
+                        WindowEvent::CloseRequested
+                        | WindowEvent::KeyboardInput {
+                            event:
+                                KeyEvent {
+                                    state: ElementState::Pressed,
+                                    physical_key: PhysicalKey::Code(KeyCode::Escape),
+                                    ..
+                                },
                             ..
-                        },
-                    ..
-                } => control_flow.exit(),
+                        } => control_flow.exit(),
 
-                WindowEvent::Resized(physical_size) => {
-                    renderer.resize(*physical_size);
-                },
-                
-                WindowEvent::RedrawRequested => {
-                    // This tells winit that we want another frame after this one
-                    renderer.window().request_redraw();
-        
-                    renderer.update();
-
-                    match renderer.render() {
-                        Ok(_) => {}
-
-                        // Reconfigure the surface if it's lost or outdated
-                        Err(
-                            wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated,
-                        ) => renderer.resize(renderer.size()),
-
-                        // The system is out of memory, we should probably quit
-                        Err(wgpu::SurfaceError::OutOfMemory) => {
-                            log::error!("OutOfMemory");
-                            control_flow.exit();
+                        WindowEvent::Resized(physical_size) => {
+                            renderer.resize(*physical_size);
                         }
-        
-                        // This happens when the a frame takes too long to present
-                        Err(wgpu::SurfaceError::Timeout) => {
-                            log::warn!("Surface timeout")
+
+                        WindowEvent::RedrawRequested => {
+                            // This tells winit that we want another frame after this one
+                            renderer.window().request_redraw();
+
+                            renderer.update();
+
+                            match renderer.render() {
+                                Ok(_) => {}
+
+                                // Reconfigure the surface if it's lost or outdated
+                                Err(wgpu::SurfaceError::Lost | wgpu::SurfaceError::Outdated) => {
+                                    renderer.resize(renderer.size())
+                                }
+
+                                // The system is out of memory, we should probably quit
+                                Err(wgpu::SurfaceError::OutOfMemory) => {
+                                    log::error!("OutOfMemory");
+                                    control_flow.exit();
+                                }
+
+                                // This happens when the a frame takes too long to present
+                                Err(wgpu::SurfaceError::Timeout) => {
+                                    log::warn!("Surface timeout")
+                                }
+                            }
                         }
+
+                        _ => {}
                     }
-                },
-
-                _ => {}
+                }
             }
-        },
-        _ => {}
-    });
-}
-
+            _ => {}
+        });
+    }
 }
