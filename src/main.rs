@@ -17,7 +17,7 @@ use winit::{
     event::*,
     event_loop::{ControlFlow, EventLoop},
     keyboard::{KeyCode, PhysicalKey},
-    window::WindowBuilder,
+    window::{Window, WindowBuilder},
 };
 use world::World;
 
@@ -59,6 +59,7 @@ struct State {
 impl State {
     pub fn new(world: World) -> State {
         let camera = Camera::new(1.3 * world.size());
+
         Self {
             world,
             camera,
@@ -76,6 +77,13 @@ impl State {
 
         let event_loop = EventLoop::new().unwrap();
         let window = WindowBuilder::new().build(&event_loop).unwrap();
+        let perspective = cgmath::PerspectiveFov::<f32> {
+            fovy: Radians::from(Degrees(90.0)),
+            aspect: (window.inner_size().width as f32) / (window.inner_size().height as f32),
+            near: 1.0,
+            far: self.world.size() * 3.0,
+        };
+        let perspective_matrix = Mat4::from(perspective);
         let mut renderer = Renderer::new(&window).await;
 
         let transform_cursor = |x: f64, y: f64| -> (f32, f32) {
@@ -86,14 +94,6 @@ impl State {
         };
 
         let mut mouse_pos = (0.0, 0.0);
-
-        let perspective = cgmath::PerspectiveFov::<f32> {
-            fovy: Radians::from(Degrees(90.0)),
-            aspect: (window.inner_size().width as f32) / (window.inner_size().height as f32),
-            near: 1.0,
-            far: self.world.size() * 3.0,
-        };
-        let perspective_matrix = Mat4::from(perspective);
 
         let mut last_frame = SystemTime::now();
         let _ = event_loop.run(move |event, control_flow| {
@@ -161,14 +161,18 @@ impl State {
                                     mouse_pos.0.signum() * (mouse_pos.0.abs() - deadzone).max(0.0),
                                     mouse_pos.1.signum() * (mouse_pos.1.abs() - deadzone).max(0.0),
                                 );
-                                self.camera.move_left_right(move_input.0 * cursor_sensitivity);
+                                self.camera
+                                    .move_left_right(move_input.0 * cursor_sensitivity);
                                 self.camera.move_up_down(move_input.1 * cursor_sensitivity);
 
                                 // update sim
                                 //self.world.update();
-                                //renderer.update(&world, &camera);
 
-                                match renderer.render() {
+                                match renderer.render(
+                                    &self.camera,
+                                    &self.world,
+                                    &perspective_matrix,
+                                ) {
                                     Ok(_) => {}
 
                                     // Reconfigure the surface if it's lost or outdated

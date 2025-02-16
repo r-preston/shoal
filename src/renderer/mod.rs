@@ -1,5 +1,9 @@
 pub mod camera;
+mod geometry;
+mod pipelines;
 
+use crate::{utility::Mat4, Camera, World};
+use pipelines::Pipelines;
 use winit::{event::WindowEvent, window::Window};
 
 pub struct Renderer<'a> {
@@ -9,6 +13,7 @@ pub struct Renderer<'a> {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     window: &'a Window,
+    pipelines: Pipelines,
 }
 
 impl<'a> Renderer<'a> {
@@ -78,6 +83,8 @@ impl<'a> Renderer<'a> {
             desired_maximum_frame_latency: 2,
         };
 
+        let pipelines = Pipelines::generate(&device, &config);
+
         Self {
             surface,
             device,
@@ -85,6 +92,7 @@ impl<'a> Renderer<'a> {
             config,
             size,
             window,
+            pipelines,
         }
     }
 
@@ -111,7 +119,12 @@ impl<'a> Renderer<'a> {
 
     pub fn update(&mut self) {}
 
-    pub fn render(&mut self) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(
+        &mut self,
+        camera: &Camera,
+        world: &World,
+        perspective: &Mat4,
+    ) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
@@ -123,26 +136,29 @@ impl<'a> Renderer<'a> {
                 label: Some("Render Encoder"),
             });
 
-        {
-            let _render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-                label: Some("Render Pass"),
-                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                    view: &view,
-                    resolve_target: None,
-                    ops: wgpu::Operations {
-                        load: wgpu::LoadOp::Clear(wgpu::Color {
-                            r: 0.1,
-                            g: 0.2,
-                            b: 0.3,
-                            a: 1.0,
-                        }),
-                        store: wgpu::StoreOp::Store,
-                    },
-                })],
-                depth_stencil_attachment: None,
-                occlusion_query_set: None,
-                timestamp_writes: None,
-            });
+        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+            label: Some("Render Pass"),
+            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                view: &view,
+                resolve_target: None,
+                ops: wgpu::Operations {
+                    load: wgpu::LoadOp::Clear(wgpu::Color {
+                        r: 0.1,
+                        g: 0.2,
+                        b: 0.3,
+                        a: 1.0,
+                    }),
+                    store: wgpu::StoreOp::Store,
+                },
+            })],
+            depth_stencil_attachment: None,
+            occlusion_query_set: None,
+            timestamp_writes: None,
+        });
+
+        for pipeline in self.pipelines.pipelines() {
+            render_pass.set_pipeline(pipeline.pipeline());
+            //render_pass.draw(, instances);
         }
 
         // submit will accept anything that implements IntoIter
