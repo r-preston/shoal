@@ -1,2 +1,2 @@
 # shoal
-Boid flocking simulation written in Rust
+Fish-themed 3d boid flocking simulation written in Rust using winit+wgpu for rendering.

@@ -1,23 +1,42 @@
 use crate::renderer::{pipelines::Pipeline, Renderer};
-use crate::utility::{Position, Vertex};
+use crate::utility::{InstanceRaw, Position, Vertex};
 use crate::world::World;
+use wgpu::util::DeviceExt;
 use wgpu::{Device, SurfaceConfiguration};
 use winit::{event::WindowEvent, window::Window};
 
+use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
+
 #[rustfmt::skip]
 const SKYBOX_VERTICES: &[Vertex] = &[
-    Vertex{position: Position{x: 1.0,  y: 1.0,  z: 1.0}},
-    Vertex{position: Position{x: 1.0,  y: 1.0,  z:-1.0}},
-    Vertex{position: Position{x: 1.0,  y:-1.0,  z: 1.0}},
-    Vertex{position: Position{x: 1.0,  y:-1.0,  z:-1.0}},
-    Vertex{position: Position{x:-1.0,  y: 1.0,  z: 1.0}},
-    Vertex{position: Position{x:-1.0,  y: 1.0,  z:-1.0}},
-    Vertex{position: Position{x:-1.0,  y:-1.0,  z: 1.0}},
-    Vertex{position: Position{x:-1.0,  y:-1.0,  z:-1.0}}
+    Vertex{position: [ 1.0,  1.0,  1.0]},
+    Vertex{position: [ 1.0,  1.0, -1.0]},
+    Vertex{position: [ 1.0, -1.0,  1.0]},
+    Vertex{position: [ 1.0, -1.0, -1.0]},
+    Vertex{position: [-1.0,  1.0,  1.0]},
+    Vertex{position: [-1.0,  1.0, -1.0]},
+    Vertex{position: [-1.0, -1.0,  1.0]},
+    Vertex{position: [-1.0, -1.0, -1.0]}
 ];
 
 #[rustfmt::skip]
-const SKYBOX_INDICES: &[u16] = &[];
+const SKYBOX_INDICES: &[u16] = &[
+    1, 3, 2,   0, 1, 2, // +x face
+    7, 5, 4,   7, 4, 6, // -x face
+    1, 0, 5,   0, 4, 5, // +y face
+    3, 7, 6,   3, 6, 2, // -y face
+    0, 2, 6,   0, 6, 4, // +z face
+    5, 7, 3,   5, 3, 1, // -z face
+];
+
+const SKYBOX_INSTANCES: &[InstanceRaw] = &[InstanceRaw {
+    model: [
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
+        [0.0, 0.0, 1.0, 0.0],
+        [0.0, 0.0, 0.0, 1.0],
+    ],
+}];
 
 pub struct SkyboxPipeline {
     render_pipeline: wgpu::RenderPipeline,
@@ -77,7 +96,7 @@ impl SkyboxPipeline {
             vertex: wgpu::VertexState {
                 module: &shader,
                 entry_point: "vs_main",
-                buffers: &[],
+                buffers: &[VERTEX_BUFFER_DESCRIPTOR, INSTANCE_BUFFER_DESCRIPTOR],
                 compilation_options: wgpu::PipelineCompilationOptions::default(),
             },
             // describe fragment shader and screen colour attachments
@@ -115,6 +134,23 @@ impl SkyboxPipeline {
         });
 
         // vertex buffer
+        let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Vertex Buffer"),
+            contents: bytemuck::cast_slice(SKYBOX_VERTICES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
+        // index buffer
+        let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Index Buffer"),
+            contents: bytemuck::cast_slice(SKYBOX_INDICES),
+            usage: wgpu::BufferUsages::INDEX,
+        });
+        // instance buffer
+        let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+            label: Some("Instance Buffer"),
+            contents: bytemuck::cast_slice(SKYBOX_INSTANCES),
+            usage: wgpu::BufferUsages::VERTEX,
+        });
 
         SkyboxPipeline {
             render_pipeline: render_pipeline,
@@ -123,7 +159,7 @@ impl SkyboxPipeline {
             index_buffer: index_buffer,
             num_indices: SKYBOX_INDICES.len() as u32,
             instance_buffer: instance_buffer,
-            num_instances: 0,
+            num_instances: SKYBOX_INSTANCES.len() as u32,
         }
     }
 }

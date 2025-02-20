@@ -169,12 +169,12 @@ impl<'a> Renderer<'a> {
             render_pass
                 .set_index_buffer(pipeline.index_buffer().slice(..), wgpu::IndexFormat::Uint16);
             render_pass.set_vertex_buffer(0, pipeline.vertex_buffer().slice(..));
-            if pipeline.num_instances() > 1 {
-                render_pass.set_vertex_buffer(1, pipeline.instance_buffer().slice(..));
-            }
+            render_pass.set_vertex_buffer(1, pipeline.instance_buffer().slice(..));
             render_pass.draw_indexed(0..pipeline.num_indices(), 0, 0..pipeline.num_instances());
+            
+            
             /*
-
+            
             render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
             render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
             render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);

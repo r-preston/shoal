@@ -11,3 +11,4 @@ log = "0.4"
 num-traits = "0.2.19"
 pollster = "0.3"
 cgmath = "0.18.0"
+bytemuck = { version = "1.16", features = [ "derive" ] }

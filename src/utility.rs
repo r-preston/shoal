@@ -1,21 +1,22 @@
 use cgmath::EuclideanSpace;
+use cgmath::{Point3, Vector3, Vector4};
 use num_traits::Float;
 use std::ops::{AddAssign, Deref, DerefMut};
 
-pub type Position = cgmath::Point3<f32>;
-pub type Velocity = cgmath::Vector3<f32>;
-pub type Direction = cgmath::Vector3<f32>;
+pub type Position = Point3<f32>;
+pub type Velocity = Vector3<f32>;
+pub type Direction = Vector3<f32>;
 
-pub type Vec4 = cgmath::Vector4<f32>;
+pub type Vec4 = Vector4<f32>;
 pub type Mat4 = cgmath::Matrix4<f32>;
 
 pub type Radians = cgmath::Rad<f32>;
 pub type Degrees = cgmath::Deg<f32>;
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct Vertex {
-    pub position: Position,
+    pub position: [f32; 3],
 }
 
 pub struct Instance {
@@ -24,7 +25,7 @@ pub struct Instance {
 }
 
 #[repr(C)]
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, Debug, bytemuck::Pod, bytemuck::Zeroable)]
 pub struct InstanceRaw {
     pub model: [[f32; 4]; 4],
 }
@@ -37,14 +38,6 @@ pub fn Degrees(deg: f32) -> Degrees {
 #[allow(non_snake_case)]
 pub fn Radians(rad: f32) -> Radians {
     cgmath::Rad::<f32>(rad)
-}
-
-impl Vertex {
-    pub fn new(x: f32, y: f32, z: f32) -> Vertex {
-        Vertex {
-            position: Position::new(x, y, z),
-        }
-    }
 }
 
 impl Instance {
