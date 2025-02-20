@@ -1,9 +1,9 @@
 pub mod camera;
-mod geometry;
 mod pipelines;
 
 use crate::{utility::Mat4, Camera, World};
 use pipelines::Pipelines;
+use wgpu::Buffer;
 use winit::{event::WindowEvent, window::Window};
 
 pub struct Renderer<'a> {
@@ -117,7 +117,11 @@ impl<'a> Renderer<'a> {
         false
     }
 
-    pub fn update(&mut self) {}
+    pub fn update(&mut self, world: &mut World) {
+        for pipeline in self.pipelines.mutable_pipelines() {
+            pipeline.update_instances(world);
+        }
+    }
 
     pub fn render(
         &mut self,
@@ -156,9 +160,31 @@ impl<'a> Renderer<'a> {
             timestamp_writes: None,
         });
 
+        // each pipeline should have a vertex buffer and an index buffer
+        // vertex buffer: create once, write once
+        // index buffer: create once, write each frame
+
         for pipeline in self.pipelines.pipelines() {
             render_pass.set_pipeline(pipeline.pipeline());
-            //render_pass.draw(, instances);
+            render_pass
+                .set_index_buffer(pipeline.index_buffer().slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.set_vertex_buffer(0, pipeline.vertex_buffer().slice(..));
+            if pipeline.num_instances() > 1 {
+                render_pass.set_vertex_buffer(1, pipeline.instance_buffer().slice(..));
+            }
+            render_pass.draw_indexed(0..pipeline.num_indices(), 0, 0..pipeline.num_instances());
+            /*
+
+            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
+            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
+            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
+            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
+
+
+             */
+            // indices:
+            // base_vertex:
+            // instances: number of times to draw the index buffer
         }
 
         // submit will accept anything that implements IntoIter

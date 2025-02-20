@@ -1,21 +1,58 @@
 use crate::renderer::{pipelines::Pipeline, Renderer};
-use crate::utility::Vec4;
+use crate::utility::{Position, Vertex};
 use crate::world::World;
 use wgpu::{Device, SurfaceConfiguration};
 use winit::{event::WindowEvent, window::Window};
 
+#[rustfmt::skip]
+const SKYBOX_VERTICES: &[Vertex] = &[
+    Vertex{position: Position{x: 1.0,  y: 1.0,  z: 1.0}},
+    Vertex{position: Position{x: 1.0,  y: 1.0,  z:-1.0}},
+    Vertex{position: Position{x: 1.0,  y:-1.0,  z: 1.0}},
+    Vertex{position: Position{x: 1.0,  y:-1.0,  z:-1.0}},
+    Vertex{position: Position{x:-1.0,  y: 1.0,  z: 1.0}},
+    Vertex{position: Position{x:-1.0,  y: 1.0,  z:-1.0}},
+    Vertex{position: Position{x:-1.0,  y:-1.0,  z: 1.0}},
+    Vertex{position: Position{x:-1.0,  y:-1.0,  z:-1.0}}
+];
+
+#[rustfmt::skip]
+const SKYBOX_INDICES: &[u16] = &[];
+
 pub struct SkyboxPipeline {
     render_pipeline: wgpu::RenderPipeline,
-    skybox: Box<[Vec4]>,
+    vertex_buffer: wgpu::Buffer,
+    num_vertices: u16,
+    index_buffer: wgpu::Buffer,
+    num_indices: u32,
+    instance_buffer: wgpu::Buffer,
+    num_instances: u32,
 }
 
 impl Pipeline for SkyboxPipeline {
-    fn geometry(&self, world: &World) -> &Box<[Vec4]> {
-        &self.skybox
-    }
-
     fn pipeline(&self) -> &wgpu::RenderPipeline {
         &self.render_pipeline
+    }
+    fn vertex_buffer(&self) -> &wgpu::Buffer {
+        &self.vertex_buffer
+    }
+    fn num_vertices(&self) -> u16 {
+        self.num_vertices
+    }
+    fn index_buffer(&self) -> &wgpu::Buffer {
+        &self.index_buffer
+    }
+    fn num_indices(&self) -> u32 {
+        self.num_indices
+    }
+    fn instance_buffer(&self) -> &wgpu::Buffer {
+        &self.instance_buffer
+    }
+    fn num_instances(&self) -> u32 {
+        self.num_instances
+    }
+    fn update_instances(&mut self, world: &World) {
+        ()
     }
 }
 
@@ -77,33 +114,16 @@ impl SkyboxPipeline {
             cache: None,
         });
 
+        // vertex buffer
+
         SkyboxPipeline {
             render_pipeline: render_pipeline,
-            skybox: Self::skybox(),
+            vertex_buffer: vertex_buffer,
+            num_vertices: SKYBOX_VERTICES.len() as u16,
+            index_buffer: index_buffer,
+            num_indices: SKYBOX_INDICES.len() as u32,
+            instance_buffer: instance_buffer,
+            num_instances: 0,
         }
-    }
-
-    #[rustfmt::skip]
-    fn skybox() -> Box<[Vec4]> {
-        Box::new([
-            // -z
-            Vec4::new(-1.0, -1.0, -1.0, 0.0),    Vec4::new( 1.0, -1.0, -1.0 ,0.0),    Vec4::new( 1.0,  1.0, -1.0, 0.0),
-            Vec4::new(-1.0, -1.0, -1.0, 0.0),    Vec4::new( 1.0,  1.0, -1.0, 0.0),    Vec4::new(-1.0,  1.0, -1.0, 0.0),
-            // +z
-            Vec4::new(-1.0, -1.0,  1.0, 0.0),    Vec4::new( 1.0,  1.0,  1.0, 0.0),    Vec4::new( 1.0, -1.0,  1.0, 0.0),
-            Vec4::new(-1.0, -1.0,  1.0, 0.0),    Vec4::new(-1.0,  1.0,  1.0, 0.0),    Vec4::new( 1.0,  1.0,  1.0, 0.0),
-            // -y
-            Vec4::new(-1.0, -1.0, -1.0, 0.0),    Vec4::new( 1.0, -1.0,  1.0, 0.0),    Vec4::new( 1.0, -1.0, -1.0, 0.0),
-            Vec4::new(-1.0, -1.0, -1.0, 0.0),    Vec4::new( 1.0, -1.0,  1.0, 0.0),    Vec4::new( 1.0, -1.0,  1.0, 0.0),
-            // +y
-            Vec4::new(-1.0,  1.0, -1.0, 0.0),    Vec4::new( 1.0,  1.0, -1.0, 0.0),    Vec4::new( 1.0,  1.0,  1.0, 0.0),
-            Vec4::new(-1.0,  1.0, -1.0, 0.0),    Vec4::new( 1.0,  1.0,  1.0, 0.0),    Vec4::new(-1.0,  1.0,  1.0, 0.0),
-            // -x
-            Vec4::new(-1.0, -1.0, -1.0, 0.0),    Vec4::new(-1.0,  1.0, -1.0, 0.0),    Vec4::new(-1.0,  1.0,  1.0, 0.0),
-            Vec4::new(-1.0, -1.0, -1.0, 0.0),    Vec4::new(-1.0,  1.0,  1.0, 0.0),    Vec4::new(-1.0, -1.0,  1.0, 0.0),
-            // +x
-            Vec4::new( 1.0, -1.0, -1.0, 0.0),    Vec4::new( 1.0,  1.0,  1.0, 0.0),    Vec4::new( 1.0,  1.0, -1.0, 0.0),
-            Vec4::new( 1.0, -1.0, -1.0, 0.0),    Vec4::new( 1.0, -1.0,  1.0, 0.0),    Vec4::new( 1.0,  1.0,  1.0, 0.0)
-        ])
     }
 }
