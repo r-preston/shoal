@@ -150,7 +150,7 @@ impl State {
                                     break 'RedrawLabel;
                                 }
 
-                                //println!("{}", self.frame);
+                                println!("{}", self.frame);
                                 self.frame += 1;
                                 last_frame = SystemTime::now();
 

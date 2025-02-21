@@ -30,6 +30,16 @@ pub struct InstanceRaw {
     pub model: [[f32; 4]; 4],
 }
 
+#[rustfmt::skip]
+// WebGPU uses DirectX's moronic normalised coordinate system where z goes from 0 to 1.
+// this crate works in OGL coordinates as nature intended (-1 to 1)
+pub const OPENGL_TO_WGPU_MATRIX: cgmath::Matrix4<f32> = cgmath::Matrix4::new(
+    1.0, 0.0, 0.0, 0.0,
+    0.0, 1.0, 0.0, 0.0,
+    0.0, 0.0, 0.5, 0.5,
+    0.0, 0.0, 0.0, 1.0,
+);
+
 #[allow(non_snake_case)]
 pub fn Degrees(deg: f32) -> Degrees {
     cgmath::Deg::<f32>(deg)

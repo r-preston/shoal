@@ -140,52 +140,39 @@ impl<'a> Renderer<'a> {
                 label: Some("Render Encoder"),
             });
 
-        let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
-            label: Some("Render Pass"),
-            color_attachments: &[Some(wgpu::RenderPassColorAttachment {
-                view: &view,
-                resolve_target: None,
-                ops: wgpu::Operations {
-                    load: wgpu::LoadOp::Clear(wgpu::Color {
-                        r: 0.1,
-                        g: 0.2,
-                        b: 0.3,
-                        a: 1.0,
-                    }),
-                    store: wgpu::StoreOp::Store,
-                },
-            })],
-            depth_stencil_attachment: None,
-            occlusion_query_set: None,
-            timestamp_writes: None,
-        });
+        {
+            let mut render_pass = encoder.begin_render_pass(&wgpu::RenderPassDescriptor {
+                label: Some("Render Pass"),
+                color_attachments: &[Some(wgpu::RenderPassColorAttachment {
+                    view: &view,
+                    resolve_target: None,
+                    ops: wgpu::Operations {
+                        load: wgpu::LoadOp::Clear(wgpu::Color {
+                            r: 0.1,
+                            g: 0.2,
+                            b: 0.3,
+                            a: 1.0,
+                        }),
+                        store: wgpu::StoreOp::Store,
+                    },
+                })],
+                depth_stencil_attachment: None,
+                occlusion_query_set: None,
+                timestamp_writes: None,
+            });
 
-        // each pipeline should have a vertex buffer and an index buffer
-        // vertex buffer: create once, write once
-        // index buffer: create once, write each frame
-
-        for pipeline in self.pipelines.pipelines() {
-            render_pass.set_pipeline(pipeline.pipeline());
-            render_pass
-                .set_index_buffer(pipeline.index_buffer().slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.set_vertex_buffer(0, pipeline.vertex_buffer().slice(..));
-            render_pass.set_vertex_buffer(1, pipeline.instance_buffer().slice(..));
-            render_pass.draw_indexed(0..pipeline.num_indices(), 0, 0..pipeline.num_instances());
-            
-            
-            /*
-            
-            render_pass.set_vertex_buffer(0, self.vertex_buffer.slice(..));
-            render_pass.set_vertex_buffer(1, self.instance_buffer.slice(..));
-            render_pass.set_index_buffer(self.index_buffer.slice(..), wgpu::IndexFormat::Uint16);
-            render_pass.draw_indexed(0..self.num_indices, 0, 0..self.instances.len() as _);
-
-
-             */
-            // indices:
-            // base_vertex:
-            // instances: number of times to draw the index buffer
-        }
+            // each pipeline should have a vertex buffer and an index buffer
+            // vertex buffer: create once, write once
+            // index buffer: create once, write each frame
+            for pipeline in self.pipelines.pipelines() {
+                render_pass.set_pipeline(pipeline.pipeline());
+                render_pass
+                    .set_index_buffer(pipeline.index_buffer().slice(..), wgpu::IndexFormat::Uint16);
+                render_pass.set_vertex_buffer(0, pipeline.vertex_buffer().slice(..));
+                render_pass.set_vertex_buffer(1, pipeline.instance_buffer().slice(..));
+                render_pass.draw_indexed(0..pipeline.num_indices(), 0, 0..pipeline.num_instances());
+            }
+        } // explicitly end lifetime of render pass before calling finish on the encoder
 
         // submit will accept anything that implements IntoIter
         self.queue.submit(std::iter::once(encoder.finish()));
