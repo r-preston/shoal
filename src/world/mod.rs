@@ -37,6 +37,10 @@ impl World {
         return world;
     }
 
+    pub fn update(&mut self) {
+        ()
+    }
+
     pub fn size(&self) -> f32 {
         self.radius
     }

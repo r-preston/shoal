@@ -47,7 +47,7 @@ pub struct SkyboxPipeline {
     num_indices: u32,
     instance_buffer: wgpu::Buffer,
     num_instances: u32,
-    camera_uniforms: CameraUniformBuffer
+    camera_uniforms: CameraUniformBuffer,
 }
 
 impl Pipeline for SkyboxPipeline {
@@ -95,9 +95,7 @@ impl SkyboxPipeline {
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[
-                    camera_uniforms.bind_group_layout(),
-                ],
+                bind_group_layouts: &[camera_uniforms.bind_group_layout()],
                 push_constant_ranges: &[],
             });
 

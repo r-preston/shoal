@@ -162,9 +162,6 @@ impl<'a> Renderer<'a> {
                 timestamp_writes: None,
             });
 
-            // each pipeline should have a vertex buffer and an index buffer
-            // vertex buffer: create once, write once
-            // index buffer: create once, write each frame
             for pipeline in self.pipelines.pipelines() {
                 render_pass.set_pipeline(pipeline.pipeline());
                 render_pass

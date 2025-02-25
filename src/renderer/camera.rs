@@ -65,7 +65,7 @@ impl CameraUniformBuffer {
     pub fn bind_group(&self) -> &wgpu::BindGroup {
         &self.bind_group
     }
-    
+
     pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
         &self.layout
     }

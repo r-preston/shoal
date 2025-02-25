@@ -43,12 +43,15 @@ fn main() {
     pollster::block_on(state.run());
 
     let end = SystemTime::now();
-    println!(
+    log::info!(
         "{} frames in {}ms ({} FPS)",
         state.frame(),
         SystemTime::now().duration_since(start).unwrap().as_millis(),
-        (state.frame() as f32) / 
-        SystemTime::now().duration_since(start).unwrap().as_secs_f32()
+        (state.frame() as f32)
+            / SystemTime::now()
+                .duration_since(start)
+                .unwrap()
+                .as_secs_f32()
     );
 }
 
@@ -76,6 +79,8 @@ impl State {
     #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
     pub async fn run(&mut self) {
         env_logger::init();
+
+        log::info!("is this thing working?");
 
         let event_loop = EventLoop::new().unwrap();
         let window = WindowBuilder::new().build(&event_loop).unwrap();
@@ -152,7 +157,7 @@ impl State {
                                     break 'RedrawLabel;
                                 }
 
-                                println!("{}", self.frame);
+                                //println!("{}", self.frame);
                                 self.frame += 1;
                                 last_frame = SystemTime::now();
 
@@ -168,7 +173,8 @@ impl State {
                                 self.camera.move_up_down(move_input.1 * cursor_sensitivity);
 
                                 // update sim
-                                //self.world.update();
+                                self.world.update();
+                                renderer.update(&mut self.world, &self.camera);
 
                                 match renderer.render(
                                     &self.camera,
