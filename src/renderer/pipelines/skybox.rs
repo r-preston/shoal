@@ -1,8 +1,9 @@
+use crate::renderer::camera::{Camera, CameraUniformBuffer};
 use crate::renderer::{pipelines::Pipeline, Renderer};
 use crate::utility::{InstanceRaw, Position, Vertex};
 use crate::world::World;
 use wgpu::util::DeviceExt;
-use wgpu::{Device, SurfaceConfiguration};
+use wgpu::{BindGroupLayout, Device, SurfaceConfiguration};
 use winit::{event::WindowEvent, window::Window};
 
 use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
@@ -46,6 +47,7 @@ pub struct SkyboxPipeline {
     num_indices: u32,
     instance_buffer: wgpu::Buffer,
     num_instances: u32,
+    camera_uniforms: CameraUniformBuffer
 }
 
 impl Pipeline for SkyboxPipeline {
@@ -73,6 +75,12 @@ impl Pipeline for SkyboxPipeline {
     fn update_instances(&mut self, world: &World) {
         ()
     }
+    fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera) {
+        self.camera_uniforms.update(queue, camera);
+    }
+    fn bind_groups(&self) -> Vec<&wgpu::BindGroup> {
+        vec![self.camera_uniforms.bind_group()]
+    }
 }
 
 impl SkyboxPipeline {
@@ -82,10 +90,14 @@ impl SkyboxPipeline {
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/skybox.wgsl").into()),
         });
 
+        let camera_uniforms = CameraUniformBuffer::new(device);
+
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Render Pipeline Layout"),
-                bind_group_layouts: &[],
+                bind_group_layouts: &[
+                    camera_uniforms.bind_group_layout(),
+                ],
                 push_constant_ranges: &[],
             });
 
@@ -160,6 +172,7 @@ impl SkyboxPipeline {
             num_indices: SKYBOX_INDICES.len() as u32,
             instance_buffer: instance_buffer,
             num_instances: SKYBOX_INSTANCES.len() as u32,
+            camera_uniforms: camera_uniforms,
         }
     }
 }

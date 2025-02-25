@@ -6,6 +6,8 @@ use crate::renderer::Renderer;
 use crate::utility::{InstanceRaw, Position, Vertex};
 use crate::world::World;
 
+use super::camera::Camera;
+
 const VERTEX_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
     // We need to switch from using a step mode of Vertex to Instance
@@ -78,5 +80,8 @@ pub trait Pipeline {
     fn num_instances(&self) -> u32;
     fn instance_buffer(&self) -> &wgpu::Buffer;
 
+    fn bind_groups(&self) -> Vec<&wgpu::BindGroup>;
+
+    fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera);
     fn update_instances(&mut self, world: &World);
 }

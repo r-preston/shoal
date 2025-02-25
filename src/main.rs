@@ -44,9 +44,11 @@ fn main() {
 
     let end = SystemTime::now();
     println!(
-        "{} frames in {}ms",
+        "{} frames in {}ms ({} FPS)",
         state.frame(),
-        SystemTime::now().duration_since(start).unwrap().as_millis()
+        SystemTime::now().duration_since(start).unwrap().as_millis(),
+        (state.frame() as f32) / 
+        SystemTime::now().duration_since(start).unwrap().as_secs_f32()
     );
 }
 

@@ -117,9 +117,10 @@ impl<'a> Renderer<'a> {
         false
     }
 
-    pub fn update(&mut self, world: &mut World) {
+    pub fn update(&mut self, world: &mut World, camera: &Camera) {
         for pipeline in self.pipelines.mutable_pipelines() {
             pipeline.update_instances(world);
+            pipeline.update_camera(&self.queue, camera);
         }
     }
 
@@ -170,6 +171,9 @@ impl<'a> Renderer<'a> {
                     .set_index_buffer(pipeline.index_buffer().slice(..), wgpu::IndexFormat::Uint16);
                 render_pass.set_vertex_buffer(0, pipeline.vertex_buffer().slice(..));
                 render_pass.set_vertex_buffer(1, pipeline.instance_buffer().slice(..));
+                for (index, bind_group) in pipeline.bind_groups().iter().enumerate() {
+                    render_pass.set_bind_group(index.try_into().unwrap(), bind_group, &[]);
+                }
                 render_pass.draw_indexed(0..pipeline.num_indices(), 0, 0..pipeline.num_instances());
             }
         } // explicitly end lifetime of render pass before calling finish on the encoder
