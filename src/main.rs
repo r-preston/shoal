@@ -39,7 +39,7 @@ multiple density maps? fish vs threat
 fn main() {
     let start = SystemTime::now();
 
-    let mut state = State::new(World::new(100.0, 5, 10, 0));
+    let mut state = State::new(World::new(5.0, 5, 10, 0));
     pollster::block_on(state.run());
 
     let end = SystemTime::now();
@@ -64,7 +64,6 @@ struct State {
 impl State {
     pub fn new(world: World) -> State {
         let camera = Camera::new(1.3 * world.size());
-
         Self {
             world,
             camera,
@@ -79,8 +78,6 @@ impl State {
     #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
     pub async fn run(&mut self) {
         env_logger::init();
-
-        log::info!("is this thing working?");
 
         let event_loop = EventLoop::new().unwrap();
         let window = WindowBuilder::new().build(&event_loop).unwrap();

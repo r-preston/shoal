@@ -7,7 +7,7 @@ use wgpu::{BindGroupLayout, Device, SurfaceConfiguration};
 use winit::{event::WindowEvent, window::Window};
 
 use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
-
+/*
 #[rustfmt::skip]
 const SKYBOX_VERTICES: &[Vertex] = &[
     Vertex{position: [ 1.0,  1.0,  1.0]},
@@ -28,6 +28,19 @@ const SKYBOX_INDICES: &[u16] = &[
     3, 7, 6,   3, 6, 2, // -y face
     0, 2, 6,   0, 6, 4, // +z face
     5, 7, 3,   5, 3, 1, // -z face
+];
+*/
+#[rustfmt::skip]
+const SKYBOX_VERTICES: &[Vertex] = &[
+    Vertex{position: [ 0.0,  1.0,  1.0]},
+    Vertex{position: [ 0.0,  1.0, -1.0]},
+    Vertex{position: [ 0.0, -1.0,  1.0]},
+    Vertex{position: [ 0.0, -1.0, -1.0]},
+];
+
+#[rustfmt::skip]
+const SKYBOX_INDICES: &[u16] = &[
+    3, 1, 0, 3, 0, 2
 ];
 
 const SKYBOX_INSTANCES: &[InstanceRaw] = &[InstanceRaw {
