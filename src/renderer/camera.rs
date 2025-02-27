@@ -5,25 +5,25 @@ use wgpu::util::DeviceExt;
 use wgpu::BindGroupLayoutDescriptor;
 
 pub struct CameraUniformBuffer {
-    bind_group: wgpu::BindGroup,
-    buffer: wgpu::Buffer,
-    layout: wgpu::BindGroupLayout,
-    matrix: [[f32; 4]; 4],
+    pub bind_group: wgpu::BindGroup,
+    pub buffer: wgpu::Buffer,
+    pub layout: wgpu::BindGroupLayout,
+    pub matrix: [[f32; 4]; 4],
 }
 
 pub struct Camera {
-    target: Position,
-    distance: f32,
-    azimuthal_angle: Radians,
-    polar_angle: Radians,
-    projection: Mat4,
+    pub target: Position,
+    pub distance: f32,
+    pub azimuthal_angle: Radians,
+    pub polar_angle: Radians,
+    pub projection: Mat4,
 }
 
 impl CameraUniformBuffer {
     pub fn new(device: &wgpu::Device) -> CameraUniformBuffer {
         let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
-            contents: bytemuck::cast_slice(&[0.0; 16]),
+            contents: bytemuck::cast_slice(&[0.0f32; 16]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
         let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
@@ -91,11 +91,15 @@ impl Camera {
     }
 
     fn angular_sensitivity() -> f32 {
-        1.0
+        0.075
     }
 
     fn default_target() -> Position {
         Position::new(0.0, 0.0, 0.0)
+    }
+
+    pub fn set_projection(&mut self, matrix: Mat4) {
+        self.projection = matrix;
     }
 
     pub fn position(&self) -> Position {
@@ -106,10 +110,12 @@ impl Camera {
 
     pub fn view_projection_matrix(&self) -> [[f32; 4]; 4] {
         let position = self.position();
-        let direction = Direction::from(self.position() - self.target).normalize();
-        let right = Camera::global_up().cross(direction);
-        let up = direction.cross(right);
-
+        let direction = Direction::from(self.target - self.position()).normalize();
+        let mut right = Camera::global_up().cross(direction);
+        if right.magnitude2() == 0.0 {
+            right = Direction::new(1.0, 0.0, 0.0);
+        }
+        let up = right.cross(direction);
         return (OPENGL_TO_WGPU_MATRIX
             * self.projection
             * Mat4::look_at_rh(position, self.target, up))
@@ -125,8 +131,8 @@ impl Camera {
         let new_angle = self.polar_angle.0 + (amount * Camera::angular_sensitivity());
         self.polar_angle = Radians(
             new_angle
-                .max(Radians::turn_div_4().0 - 0.05)
-                .min(0.05 - Radians::turn_div_4().0),
+                .min(Radians::turn_div_4().0 - 0.05)
+                .max(0.05 - Radians::turn_div_4().0),
         );
     }
 

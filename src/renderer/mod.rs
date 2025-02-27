@@ -124,12 +124,7 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    pub fn render(
-        &mut self,
-        camera: &Camera,
-        world: &World,
-        perspective: &Mat4,
-    ) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, camera: &Camera, world: &World) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture

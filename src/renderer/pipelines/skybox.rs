@@ -2,8 +2,9 @@ use crate::renderer::camera::{Camera, CameraUniformBuffer};
 use crate::renderer::{pipelines::Pipeline, Renderer};
 use crate::utility::{InstanceRaw, Position, Vertex};
 use crate::world::World;
+use wgpu::core::instance;
 use wgpu::util::DeviceExt;
-use wgpu::{BindGroupLayout, Device, SurfaceConfiguration};
+use wgpu::{BindGroupLayout, Device, Instance, SurfaceConfiguration};
 use winit::{event::WindowEvent, window::Window};
 
 use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
@@ -30,17 +31,41 @@ const SKYBOX_INDICES: &[u16] = &[
     5, 7, 3,   5, 3, 1, // -z face
 ];
 */
-#[rustfmt::skip]
 const SKYBOX_VERTICES: &[Vertex] = &[
-    Vertex{position: [ 0.0,  1.0,  1.0]},
-    Vertex{position: [ 0.0,  1.0, -1.0]},
-    Vertex{position: [ 0.0, -1.0,  1.0]},
-    Vertex{position: [ 0.0, -1.0, -1.0]},
+    Vertex {
+        position: [1.0, 1.0, 1.0],
+    },
+    Vertex {
+        position: [1.0, 1.0, -1.0],
+    },
+    Vertex {
+        position: [1.0, -1.0, 1.0],
+    },
+    Vertex {
+        position: [1.0, -1.0, -1.0],
+    },
+    Vertex {
+        position: [-1.0, 1.0, 1.0],
+    },
+    Vertex {
+        position: [-1.0, 1.0, -1.0],
+    },
+    Vertex {
+        position: [-1.0, -1.0, 1.0],
+    },
+    Vertex {
+        position: [-1.0, -1.0, -1.0],
+    },
 ];
 
 #[rustfmt::skip]
 const SKYBOX_INDICES: &[u16] = &[
-    3, 1, 0, 3, 0, 2
+    1, 2, 3,   0, 2, 1, // +x face
+    7, 4, 5,   7, 6, 4, // -x face
+    1, 5, 0,   0, 5, 4, // +y face
+    3, 6, 7,   3, 2, 6, // -y face
+    0, 6, 2,   0, 4, 6, // +z face
+    5, 3, 7,   5, 1, 3, // -z face
 ];
 
 const SKYBOX_INSTANCES: &[InstanceRaw] = &[InstanceRaw {
@@ -93,6 +118,9 @@ impl Pipeline for SkyboxPipeline {
     }
     fn bind_groups(&self) -> Vec<&wgpu::BindGroup> {
         vec![self.camera_uniforms.bind_group()]
+    }
+    fn camera(&self) -> &CameraUniformBuffer {
+        &self.camera_uniforms
     }
 }
 

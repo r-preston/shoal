@@ -6,7 +6,7 @@ use crate::renderer::Renderer;
 use crate::utility::{InstanceRaw, Position, Vertex};
 use crate::world::World;
 
-use super::camera::Camera;
+use super::camera::{Camera, CameraUniformBuffer};
 
 const VERTEX_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
@@ -84,4 +84,6 @@ pub trait Pipeline {
 
     fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera);
     fn update_instances(&mut self, world: &World);
+
+    fn camera(&self) -> &CameraUniformBuffer;
 }

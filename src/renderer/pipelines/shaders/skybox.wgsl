@@ -34,8 +34,8 @@ fn vs_main(
         vec4<f32>(0.0, 0.0, 1.0, 0.0), 
         vec4<f32>(0.0, 0.0, 0.0, 0.0));
     var out: VertexOutput;
-    out.color = vec3<f32>(0.2, 1.0, 0.4);//model.position;
-    out.clip_position =  /*camera.view_proj *no_translation_matrix */ vec4<f32>(model.position, 1.0);
+    out.color = model.position;//vec3<f32>(0.2, 1.0, 0.4);//model.position;
+    out.clip_position =  camera.view_proj * vec4<f32>(model.position, 1.0);
     return out;
 }
 
