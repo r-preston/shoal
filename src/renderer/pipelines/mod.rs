@@ -10,15 +10,19 @@ use super::camera::{Camera, CameraUniformBuffer};
 
 const VERTEX_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
-    // We need to switch from using a step mode of Vertex to Instance
-    // This means that our shaders will only change to use the next
-    // instance when the shader starts processing a new instance
     step_mode: wgpu::VertexStepMode::Vertex,
-    attributes: &[wgpu::VertexAttribute {
-        offset: 0,
-        shader_location: 0,
-        format: wgpu::VertexFormat::Float32x3,
-    }],
+    attributes: &[
+        wgpu::VertexAttribute {
+            offset: 0,
+            shader_location: 0,
+            format: wgpu::VertexFormat::Float32x3,
+        },
+        wgpu::VertexAttribute {
+            offset: std::mem::size_of::<[f32; 3]>() as wgpu::BufferAddress,
+            shader_location: 1,
+            format: wgpu::VertexFormat::Float32x3,
+        },
+    ],
 };
 
 const INSTANCE_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
@@ -28,22 +32,22 @@ const INSTANCE_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::Vert
         // represent mat4 as 4xvec4
         wgpu::VertexAttribute {
             offset: 0,
-            shader_location: 1,
+            shader_location: 4,
             format: wgpu::VertexFormat::Float32x4,
         },
         wgpu::VertexAttribute {
             offset: std::mem::size_of::<[f32; 4]>() as wgpu::BufferAddress,
-            shader_location: 2,
+            shader_location: 5,
             format: wgpu::VertexFormat::Float32x4,
         },
         wgpu::VertexAttribute {
             offset: std::mem::size_of::<[f32; 8]>() as wgpu::BufferAddress,
-            shader_location: 3,
+            shader_location: 6,
             format: wgpu::VertexFormat::Float32x4,
         },
         wgpu::VertexAttribute {
             offset: std::mem::size_of::<[f32; 12]>() as wgpu::BufferAddress,
-            shader_location: 4,
+            shader_location: 7,
             format: wgpu::VertexFormat::Float32x4,
         },
     ],

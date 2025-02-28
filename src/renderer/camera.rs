@@ -12,11 +12,11 @@ pub struct CameraUniformBuffer {
 }
 
 pub struct Camera {
-    pub target: Position,
-    pub distance: f32,
-    pub azimuthal_angle: Radians,
-    pub polar_angle: Radians,
-    pub projection: Mat4,
+    target: Position,
+    distance: f32,
+    azimuthal_angle: Radians,
+    polar_angle: Radians,
+    projection: Mat4,
 }
 
 impl CameraUniformBuffer {
@@ -54,12 +54,8 @@ impl CameraUniformBuffer {
         }
     }
 
-    pub fn update(&self, queue: &wgpu::Queue, camera: &Camera) {
-        queue.write_buffer(
-            &self.buffer,
-            0,
-            bytemuck::cast_slice(&[camera.view_projection_matrix()]),
-        );
+    pub fn update(&self, queue: &wgpu::Queue, camera_matrix: &[[f32; 4]; 4]) {
+        queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(camera_matrix));
     }
 
     pub fn bind_group(&self) -> &wgpu::BindGroup {
@@ -108,18 +104,19 @@ impl Camera {
         self.distance * Position::new(cos_theta * cos_phi, cos_theta * sin_phi, sin_theta)
     }
 
-    pub fn view_projection_matrix(&self) -> [[f32; 4]; 4] {
+    pub fn view_matrix(&self) -> Mat4 {
         let position = self.position();
-        let direction = Direction::from(self.target - self.position()).normalize();
-        let mut right = Camera::global_up().cross(direction);
+        let direction = Direction::from(position - self.target).normalize();
+        let mut right = direction.cross(Camera::global_up());
         if right.magnitude2() == 0.0 {
             right = Direction::new(1.0, 0.0, 0.0);
         }
         let up = right.cross(direction);
-        return (OPENGL_TO_WGPU_MATRIX
-            * self.projection
-            * Mat4::look_at_rh(position, self.target, up))
-        .into();
+        Mat4::look_at_rh(position, self.target, up)
+    }
+
+    pub fn projection_matrix(&self) -> Mat4 {
+        OPENGL_TO_WGPU_MATRIX * self.projection
     }
 
     pub fn move_in_out(&mut self, amount: f32) {
