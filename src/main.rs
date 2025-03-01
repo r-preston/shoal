@@ -196,6 +196,11 @@ impl State {
                                     Err(wgpu::SurfaceError::Timeout) => {
                                         log::warn!("Surface timeout")
                                     }
+
+                                    // This happens when the a frame takes too long to present
+                                    Err(wgpu::SurfaceError::Other) => {
+                                        log::warn!("Unexpected Surface error")
+                                    }
                                 }
                             }
 

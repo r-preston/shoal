@@ -1,6 +1,7 @@
 pub mod skybox;
+pub mod texture;
 
-use wgpu::{Device, SurfaceConfiguration};
+use wgpu::{Device, Queue, SurfaceConfiguration};
 
 use crate::renderer::Renderer;
 use crate::utility::{InstanceRaw, Position, Vertex};
@@ -56,10 +57,10 @@ const INSTANCE_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::Vert
 pub struct Pipelines(Vec<Box<dyn Pipeline>>);
 
 impl Pipelines {
-    pub fn generate(device: &Device, config: &SurfaceConfiguration) -> Pipelines {
+    pub fn generate(device: &Device, config: &SurfaceConfiguration, queue: &Queue) -> Pipelines {
         let mut pipelines = Vec::<Box<dyn Pipeline>>::new();
 
-        pipelines.push(Box::new(skybox::SkyboxPipeline::new(device, config)));
+        pipelines.push(Box::new(skybox::SkyboxPipeline::new(device, config, queue)));
 
         Pipelines(pipelines)
     }

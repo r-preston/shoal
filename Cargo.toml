@@ -4,7 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-wgpu = "22.1.0"
+wgpu = "24.0.0"
 winit = { version = "0.29", features = ["rwh_05"] }
 env_logger = "0.10"
 log = "0.4"
@@ -12,3 +12,8 @@ num-traits = "0.2.19"
 pollster = "0.3"
 cgmath = "0.18.0"
 bytemuck = { version = "1.16", features = [ "derive" ] }
+
+[dependencies.image]
+version = "0.24"
+default-features = false
+features = ["png"]
