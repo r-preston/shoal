@@ -14,13 +14,13 @@ use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
 
 #[rustfmt::skip]
 const SKYBOX_VERTICES: &[Vertex] = &[
-    Vertex{position: [ 1.0,  1.0,  1.0], normal: [ 0.0, 0.0, 1.0]},
+    Vertex{position: [ 1.0,  1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
     Vertex{position: [ 1.0,  1.0, -1.0], normal: [ 0.0, 0.0, 0.0]},
-    Vertex{position: [ 1.0, -1.0,  1.0], normal: [ 0.0, 0.0, 1.0]},
+    Vertex{position: [ 1.0, -1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
     Vertex{position: [ 1.0, -1.0, -1.0], normal: [ 0.0, 0.0, 0.0]},
-    Vertex{position: [-1.0,  1.0,  1.0], normal: [ 0.0, 0.0, 1.0]},
+    Vertex{position: [-1.0,  1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
     Vertex{position: [-1.0,  1.0, -1.0], normal: [ 0.0, 0.0, 0.0]},
-    Vertex{position: [-1.0, -1.0,  1.0], normal: [ 0.0, 0.0, 1.0]},
+    Vertex{position: [-1.0, -1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
     Vertex{position: [-1.0, -1.0, -1.0], normal: [ 0.0, 0.0, 0.0]}
 ];
 
