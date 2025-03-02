@@ -17,6 +17,7 @@ struct VertexOutput {
 
 struct CameraUniform {
     view_proj: mat4x4<f32>,
+    pos: vec3<f32>,
 };
 
 
@@ -75,8 +76,8 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
         // simulate sun overhead
         f32(in.model_position.z > 0.0) * 
         vec3<f32>(0.2) * 
-        pow(cos(1.5*in.model_position.x), 12.0) *
-        pow(cos(1.5*in.model_position.y), 12.0)
+        max(0.0, pow(cos(1.5*in.model_position.x-0.5), 12.0)) *
+        max(0.0, pow(cos(1.5*in.model_position.y-0.5), 12.0))
     ) +
     (
         // create wave pattern on the surface

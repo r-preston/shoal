@@ -1,6 +1,9 @@
+pub mod fish;
+pub mod shark;
 pub mod skybox;
 pub mod texture;
 
+use texture::Texture;
 use wgpu::{Device, Queue, SurfaceConfiguration};
 
 use crate::renderer::Renderer;
@@ -60,6 +63,8 @@ impl Pipelines {
     pub fn generate(device: &Device, config: &SurfaceConfiguration, queue: &Queue) -> Pipelines {
         let mut pipelines = Vec::<Box<dyn Pipeline>>::new();
 
+        //pipelines.push(Box::new(fish::FishPipeline::new(device, config)));
+        pipelines.push(Box::new(shark::SharkPipeline::new(device, config)));
         pipelines.push(Box::new(skybox::SkyboxPipeline::new(device, config, queue)));
 
         Pipelines(pipelines)

@@ -23,13 +23,13 @@ impl CameraUniformBuffer {
     pub fn new(device: &wgpu::Device) -> CameraUniformBuffer {
         let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Camera Buffer"),
-            contents: bytemuck::cast_slice(&[0.0f32; 16]),
+            contents: bytemuck::cast_slice(&[0.0f32; 20]),
             usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
         });
         let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
             entries: &[wgpu::BindGroupLayoutEntry {
                 binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX,
+                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
                 ty: wgpu::BindingType::Buffer {
                     ty: wgpu::BufferBindingType::Uniform,
                     has_dynamic_offset: false,
@@ -54,8 +54,18 @@ impl CameraUniformBuffer {
         }
     }
 
-    pub fn update(&self, queue: &wgpu::Queue, camera_matrix: &[[f32; 4]; 4]) {
+    pub fn update(
+        &self,
+        queue: &wgpu::Queue,
+        camera_matrix: &[[f32; 4]; 4],
+        camera_position: &[f32; 3],
+    ) {
         queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(camera_matrix));
+        queue.write_buffer(
+            &self.buffer,
+            std::mem::size_of::<[[f32; 4]; 4]>() as wgpu::BufferAddress,
+            bytemuck::cast_slice(camera_position),
+        );
     }
 
     pub fn bind_group(&self) -> &wgpu::BindGroup {
