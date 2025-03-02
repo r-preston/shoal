@@ -97,7 +97,7 @@ pub trait Pipeline {
     fn bind_groups(&self) -> Vec<&wgpu::BindGroup>;
 
     fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera);
-    fn update_instances(&mut self, world: &World);
+    fn update_instances(&mut self, device: &Device, queue: &Queue, world: &World);
 
     //fn camera(&self) -> &UniformBuffer;
 }

@@ -78,7 +78,7 @@ impl Pipeline for SkyboxPipeline {
     fn num_instances(&self) -> u32 {
         self.num_instances
     }
-    fn update_instances(&mut self, world: &World) {
+    fn update_instances(&mut self, device: &Device, queue: &Queue, world: &World) {
         ()
     }
     fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera) {

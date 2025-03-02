@@ -23,6 +23,7 @@ pub struct Vertex {
 }
 
 pub struct Instance {
+    pub scale: f32,
     pub position: Position,
     pub rotation: cgmath::Quaternion<f32>,
 }
@@ -58,7 +59,8 @@ impl Instance {
     pub fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
             model: (cgmath::Matrix4::from_translation(self.position.to_vec())
-                * cgmath::Matrix4::from(self.rotation))
+                * cgmath::Matrix4::from(self.rotation)
+                * cgmath::Matrix4::from_scale(self.scale))
             .into(),
         }
     }

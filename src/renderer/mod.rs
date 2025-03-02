@@ -183,7 +183,7 @@ impl<'a> Renderer<'a> {
         }
         // update buffers
         for pipeline in self.pipelines.mutable_pipelines() {
-            pipeline.update_instances(world);
+            pipeline.update_instances(&self.device, &self.queue, world);
             pipeline.update_camera(&self.queue, &self.camera);
         }
     }
@@ -229,6 +229,9 @@ impl<'a> Renderer<'a> {
             });
 
             for pipeline in self.pipelines.pipelines() {
+                if pipeline.num_instances() == 0 {
+                    continue;
+                }
                 render_pass.set_pipeline(pipeline.pipeline());
                 render_pass
                     .set_index_buffer(pipeline.index_buffer().slice(..), wgpu::IndexFormat::Uint16);

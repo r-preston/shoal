@@ -41,6 +41,14 @@ impl World {
         ()
     }
 
+    pub fn fish(&self) -> &Vec<Fish> {
+        &self.fish
+    }
+
+    pub fn sharks(&self) -> &Vec<Shark> {
+        &self.sharks
+    }
+
     pub fn size(&self) -> f32 {
         self.radius
     }

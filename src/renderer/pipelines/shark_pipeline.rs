@@ -1,10 +1,11 @@
+use crate::actors::Actor;
 use crate::renderer::camera::Camera;
 use crate::renderer::uniform::UniformBuffer;
 use crate::renderer::{
     pipelines::{texture::Texture, Pipeline},
     Renderer,
 };
-use crate::utility::{InstanceRaw, Mat3, Mat4, Position, Vertex};
+use crate::utility::{InstanceRaw, Mat3, Mat4, Position, Vec3, Vertex};
 use crate::world::World;
 use wgpu::core::instance;
 use wgpu::util::DeviceExt;
@@ -84,14 +85,7 @@ const SHARK_INDICES: &[u16] = &[
     30, 29, 4,   4,  31, 32,
 ];
 
-const SKYBOX_INSTANCES: &[InstanceRaw] = &[InstanceRaw {
-    model: [
-        [0.2, 0.0, 0.0, 0.0],
-        [0.0, 0.2, 0.0, 0.0],
-        [0.0, 0.0, 0.2, 0.0],
-        [0.0, 1.0, 0.0, 0.2],
-    ],
-}];
+const MODEL_SCALE: f32 = 1.0;
 
 pub struct SharkPipeline {
     render_pipeline: wgpu::RenderPipeline,
@@ -126,9 +120,43 @@ impl Pipeline for SharkPipeline {
     fn num_instances(&self) -> u32 {
         self.num_instances
     }
-    fn update_instances(&mut self, world: &World) {
-        ()
+    fn update_instances(&mut self, device: &Device, queue: &Queue, world: &World) {
+        if world.sharks().is_empty() {
+            return;
+        }
+        // calculate model matricies
+        let mut model_matrices: Vec<InstanceRaw> = Vec::new();
+        for shark in world.sharks() {
+            let instance = crate::utility::Instance {
+                scale: MODEL_SCALE,
+                position: *shark.position(),
+                rotation: cgmath::Quaternion::from_arc(
+                    Vec3::new(1.0, 0.0, 0.0),
+                    *shark.velocity(),
+                    Some(Vec3::new(1.0, 0.0, 0.0)),
+                ),
+            };
+            model_matrices.push(instance.to_raw());
+        }
+
+        if world.fish().len() != self.num_instances as usize {
+            // if buffer is wrong size, recreate it
+            self.instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
+                label: Some("Shark Instance Buffer"),
+                contents: bytemuck::cast_slice(model_matrices.as_slice()),
+                usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
+            });
+            self.num_instances = world.fish().len().try_into().unwrap();
+        } else {
+            // copy data into instance buffer
+            queue.write_buffer(
+                &self.instance_buffer,
+                0,
+                bytemuck::cast_slice(model_matrices.as_slice()),
+            );
+        }
     }
+
     fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera) {
         let camera_matrix = camera.projection_matrix() * camera.view_matrix();
         self.uniforms
@@ -220,8 +248,8 @@ impl SharkPipeline {
         // instance buffer
         let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
             label: Some("Shark Instance Buffer"),
-            contents: bytemuck::cast_slice(SKYBOX_INSTANCES),
-            usage: wgpu::BufferUsages::VERTEX,
+            contents: bytemuck::cast_slice(&[0]),
+            usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
         });
         // texture buffer
 
@@ -232,7 +260,7 @@ impl SharkPipeline {
             index_buffer,
             num_indices: SHARK_INDICES.len() as u32,
             instance_buffer,
-            num_instances: SKYBOX_INSTANCES.len() as u32,
+            num_instances: 0,
             uniforms,
         }
     }
