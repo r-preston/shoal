@@ -1,4 +1,5 @@
-use crate::renderer::camera::{Camera, CameraUniformBuffer};
+use crate::renderer::camera::Camera;
+use crate::renderer::uniform::UniformBuffer;
 use crate::renderer::{
     pipelines::{texture::Texture, Pipeline},
     Renderer,
@@ -100,7 +101,7 @@ pub struct SharkPipeline {
     num_indices: u32,
     instance_buffer: wgpu::Buffer,
     num_instances: u32,
-    camera_uniforms: CameraUniformBuffer,
+    uniforms: UniformBuffer,
 }
 
 impl Pipeline for SharkPipeline {
@@ -130,14 +131,11 @@ impl Pipeline for SharkPipeline {
     }
     fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera) {
         let camera_matrix = camera.projection_matrix() * camera.view_matrix();
-        self.camera_uniforms
+        self.uniforms
             .update(queue, &camera_matrix.into(), &camera.position().into());
     }
     fn bind_groups(&self) -> Vec<&wgpu::BindGroup> {
-        vec![self.camera_uniforms.bind_group()]
-    }
-    fn camera(&self) -> &CameraUniformBuffer {
-        &self.camera_uniforms
+        vec![self.uniforms.bind_group()]
     }
 }
 
@@ -148,12 +146,12 @@ impl SharkPipeline {
             source: wgpu::ShaderSource::Wgsl(include_str!("shaders/shark.wgsl").into()),
         });
 
-        let camera_uniforms = CameraUniformBuffer::new(device);
+        let uniforms = UniformBuffer::new(device);
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
                 label: Some("Shark Render Pipeline Layout"),
-                bind_group_layouts: &[camera_uniforms.bind_group_layout()],
+                bind_group_layouts: &[uniforms.bind_group_layout()],
                 push_constant_ranges: &[],
             });
 
@@ -228,14 +226,14 @@ impl SharkPipeline {
         // texture buffer
 
         SharkPipeline {
-            render_pipeline: render_pipeline,
-            vertex_buffer: vertex_buffer,
+            render_pipeline,
+            vertex_buffer,
             num_vertices: SHARK_VERTICES.len() as u16,
-            index_buffer: index_buffer,
+            index_buffer,
             num_indices: SHARK_INDICES.len() as u32,
-            instance_buffer: instance_buffer,
+            instance_buffer,
             num_instances: SKYBOX_INSTANCES.len() as u32,
-            camera_uniforms: camera_uniforms,
+            uniforms,
         }
     }
 }

@@ -1,4 +1,4 @@
-pub mod field;
+mod field;
 
 use crate::actors::fish::Fish;
 use crate::actors::shark::Shark;

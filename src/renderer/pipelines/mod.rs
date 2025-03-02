@@ -1,8 +1,11 @@
-pub mod fish;
-pub mod shark;
-pub mod skybox;
+mod fish_pipeline;
+mod shark_pipeline;
+mod skybox_pipeline;
 pub mod texture;
 
+use fish_pipeline::FishPipeline;
+use shark_pipeline::SharkPipeline;
+use skybox_pipeline::SkyboxPipeline;
 use texture::Texture;
 use wgpu::{Device, Queue, SurfaceConfiguration};
 
@@ -10,7 +13,8 @@ use crate::renderer::Renderer;
 use crate::utility::{InstanceRaw, Position, Vertex};
 use crate::world::World;
 
-use super::camera::{Camera, CameraUniformBuffer};
+use super::camera::Camera;
+use super::uniform::UniformBuffer;
 
 const VERTEX_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
@@ -63,9 +67,9 @@ impl Pipelines {
     pub fn generate(device: &Device, config: &SurfaceConfiguration, queue: &Queue) -> Pipelines {
         let mut pipelines = Vec::<Box<dyn Pipeline>>::new();
 
-        pipelines.push(Box::new(fish::FishPipeline::new(device, config)));
-        pipelines.push(Box::new(shark::SharkPipeline::new(device, config)));
-        pipelines.push(Box::new(skybox::SkyboxPipeline::new(device, config, queue)));
+        pipelines.push(Box::new(FishPipeline::new(device, config)));
+        pipelines.push(Box::new(SharkPipeline::new(device, config)));
+        pipelines.push(Box::new(SkyboxPipeline::new(device, config, queue)));
 
         Pipelines(pipelines)
     }
@@ -95,5 +99,5 @@ pub trait Pipeline {
     fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera);
     fn update_instances(&mut self, world: &World);
 
-    fn camera(&self) -> &CameraUniformBuffer;
+    //fn camera(&self) -> &UniformBuffer;
 }

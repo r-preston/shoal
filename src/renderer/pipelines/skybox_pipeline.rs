@@ -1,4 +1,5 @@
-use crate::renderer::camera::{Camera, CameraUniformBuffer};
+use crate::renderer::camera::Camera;
+use crate::renderer::uniform::UniformBuffer;
 use crate::renderer::{
     pipelines::{texture::Texture, Pipeline},
     Renderer,
@@ -13,39 +14,37 @@ use winit::{event::WindowEvent, window::Window};
 use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
 
 #[rustfmt::skip]
-const FISH_VERTICES: &[Vertex] = &[
-    // RHS
-    Vertex{position: [ 1.0,  0.0,  0.0 ], normal: [ 0.196116, -0.980581, 0.0      ]},
-    Vertex{position: [ 0.5,  0.0,  0.25], normal: [ 0.0,      -0.980581, 0.196116 ]},
-    Vertex{position: [ 0.5,  0.0, -0.25], normal: [ 0.0,      -0.980581, -0.196116]},
-    Vertex{position: [-0.75, 0.0,  0.0 ], normal: [-0.196116, -0.980581, 0.0      ]},
-    Vertex{position: [-1.0,  0.0,  0.35], normal: [ 0.0,      -1.0,      0.0      ]},
-    Vertex{position: [-0.88, 0.0, -0.3 ], normal: [ 0.0,      -1.0,      0.0      ]},
-    // LHS
-    Vertex{position: [ 1.0,  0.0,  0.0 ], normal: [ 0.196116,  0.980581, 0.0      ]},
-    Vertex{position: [ 0.5,  0.0,  0.25], normal: [ 0.0,       0.980581, 0.196116 ]},
-    Vertex{position: [ 0.5,  0.0, -0.25], normal: [ 0.0,       0.980581, -0.196116]},
-    Vertex{position: [-0.75, 0.0,  0.0 ], normal: [-0.196116,  0.980581, 0.0      ]},
-    Vertex{position: [-1.0,  0.0,  0.35], normal: [ 0.0,       1.0,      0.0      ]},
-    Vertex{position: [-0.88, 0.0, -0.3 ], normal: [ 0.0,       1.0,      0.0      ]},
+const SKYBOX_VERTICES: &[Vertex] = &[
+    Vertex{position: [ 1.0,  1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
+    Vertex{position: [ 1.0,  1.0, -1.0], normal: [ 0.0, 0.0, 0.0]},
+    Vertex{position: [ 1.0, -1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
+    Vertex{position: [ 1.0, -1.0, -1.0], normal: [ 0.0, 0.0, 0.0]},
+    Vertex{position: [-1.0,  1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
+    Vertex{position: [-1.0,  1.0, -1.0], normal: [ 0.0, 0.0, 0.0]},
+    Vertex{position: [-1.0, -1.0,  1.0], normal: [ 0.0, 0.0, 0.0]},
+    Vertex{position: [-1.0, -1.0, -1.0], normal: [ 0.0, 0.0, 0.0]}
 ];
 
 #[rustfmt::skip]
-const FISH_INDICES: &[u16] = &[    
-    0, 1, 2,   1, 3, 2,   3, 4,  5,  // RHS
-    6, 8, 7,   7, 8, 9,   9, 11, 10, // LHS
+const SKYBOX_INDICES: &[u16] = &[
+    1, 3, 2,   0, 1, 2, // +x face
+    7, 5, 4,   7, 4, 6, // -x face
+    1, 0, 5,   0, 4, 5, // +y face
+    3, 7, 6,   3, 6, 2, // -y face
+    0, 2, 6,   0, 6, 4, // +z face
+    5, 7, 3,   5, 3, 1, // -z face
 ];
 
 const SKYBOX_INSTANCES: &[InstanceRaw] = &[InstanceRaw {
     model: [
-        [1.0, 0.1, 0.0, 0.0],
-        [0.0, 1.0, 0.3, 0.0],
+        [1.0, 0.0, 0.0, 0.0],
+        [0.0, 1.0, 0.0, 0.0],
         [0.0, 0.0, 1.0, 0.0],
         [0.0, 0.0, 0.0, 1.0],
     ],
 }];
 
-pub struct FishPipeline {
+pub struct SkyboxPipeline {
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: wgpu::Buffer,
     num_vertices: u16,
@@ -53,10 +52,11 @@ pub struct FishPipeline {
     num_indices: u32,
     instance_buffer: wgpu::Buffer,
     num_instances: u32,
-    camera_uniforms: CameraUniformBuffer,
+    uniforms: UniformBuffer,
+    texture: Texture,
 }
 
-impl Pipeline for FishPipeline {
+impl Pipeline for SkyboxPipeline {
     fn pipeline(&self) -> &wgpu::RenderPipeline {
         &self.render_pipeline
     }
@@ -82,36 +82,49 @@ impl Pipeline for FishPipeline {
         ()
     }
     fn update_camera(&mut self, queue: &wgpu::Queue, camera: &Camera) {
-        let camera_matrix = camera.projection_matrix() * camera.view_matrix();
-        self.camera_uniforms
-            .update(queue, &camera_matrix.into(), &camera.position().into());
+        let mut trunc_matrix = camera.view_matrix();
+        // remove translational components of camera view
+        trunc_matrix.x.w = 0.0;
+        trunc_matrix.y.w = 0.0;
+        trunc_matrix.z.w = 0.0;
+        trunc_matrix.w.x = 0.0;
+        trunc_matrix.w.y = 0.0;
+        trunc_matrix.w.z = 0.0;
+        trunc_matrix = camera.projection_matrix() * trunc_matrix;
+        self.uniforms
+            .update(queue, &trunc_matrix.into(), &camera.position().into());
     }
     fn bind_groups(&self) -> Vec<&wgpu::BindGroup> {
-        vec![self.camera_uniforms.bind_group()]
-    }
-    fn camera(&self) -> &CameraUniformBuffer {
-        &self.camera_uniforms
+        vec![
+            self.uniforms.bind_group(),
+            self.texture.bind_group.as_ref().unwrap(),
+        ]
     }
 }
 
-impl FishPipeline {
-    pub fn new(device: &Device, config: &SurfaceConfiguration) -> FishPipeline {
+impl SkyboxPipeline {
+    pub fn new(device: &Device, config: &SurfaceConfiguration, queue: &Queue) -> SkyboxPipeline {
         let shader = device.create_shader_module(wgpu::ShaderModuleDescriptor {
-            label: Some("Fish Shader"),
-            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/fish.wgsl").into()),
+            label: Some("Skybox Shader"),
+            source: wgpu::ShaderSource::Wgsl(include_str!("shaders/skybox.wgsl").into()),
         });
 
-        let camera_uniforms = CameraUniformBuffer::new(device);
+        let uniforms = UniformBuffer::new(device);
+
+        let texture = Texture::from_bytes(include_bytes!("textures/waves.png"), device, queue);
 
         let render_pipeline_layout =
             device.create_pipeline_layout(&wgpu::PipelineLayoutDescriptor {
-                label: Some("Fish Render Pipeline Layout"),
-                bind_group_layouts: &[camera_uniforms.bind_group_layout()],
+                label: Some("Skybox Render Pipeline Layout"),
+                bind_group_layouts: &[
+                    uniforms.bind_group_layout(),
+                    texture.bind_group_layout.as_ref().unwrap(),
+                ],
                 push_constant_ranges: &[],
             });
 
         let render_pipeline = device.create_render_pipeline(&wgpu::RenderPipelineDescriptor {
-            label: Some("Fish Render Pipeline"),
+            label: Some("Skybox Render Pipeline"),
             layout: Some(&render_pipeline_layout),
             // describe vertex shader attachments
             vertex: wgpu::VertexState {
@@ -146,8 +159,8 @@ impl FishPipeline {
             },
             depth_stencil: Some(wgpu::DepthStencilState {
                 format: Texture::DEPTH_FORMAT,
-                depth_write_enabled: true,
-                depth_compare: wgpu::CompareFunction::Less,
+                depth_write_enabled: false,
+                depth_compare: wgpu::CompareFunction::LessEqual,
                 stencil: wgpu::StencilState::default(),
                 bias: wgpu::DepthBiasState::default(),
             }),
@@ -162,33 +175,34 @@ impl FishPipeline {
 
         // vertex buffer
         let vertex_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Fish Vertex Buffer"),
-            contents: bytemuck::cast_slice(FISH_VERTICES),
+            label: Some("Skybox Vertex Buffer"),
+            contents: bytemuck::cast_slice(SKYBOX_VERTICES),
             usage: wgpu::BufferUsages::VERTEX,
         });
         // index buffer
         let index_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Fish Index Buffer"),
-            contents: bytemuck::cast_slice(FISH_INDICES),
+            label: Some("Skybox Index Buffer"),
+            contents: bytemuck::cast_slice(SKYBOX_INDICES),
             usage: wgpu::BufferUsages::INDEX,
         });
         // instance buffer
         let instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Fish Instance Buffer"),
+            label: Some("Skybox Instance Buffer"),
             contents: bytemuck::cast_slice(SKYBOX_INSTANCES),
             usage: wgpu::BufferUsages::VERTEX,
         });
         // texture buffer
 
-        FishPipeline {
-            render_pipeline: render_pipeline,
-            vertex_buffer: vertex_buffer,
-            num_vertices: FISH_VERTICES.len() as u16,
-            index_buffer: index_buffer,
-            num_indices: FISH_INDICES.len() as u32,
-            instance_buffer: instance_buffer,
+        SkyboxPipeline {
+            render_pipeline,
+            vertex_buffer,
+            num_vertices: SKYBOX_VERTICES.len() as u16,
+            index_buffer,
+            num_indices: SKYBOX_INDICES.len() as u32,
+            instance_buffer,
             num_instances: SKYBOX_INSTANCES.len() as u32,
-            camera_uniforms: camera_uniforms,
+            uniforms,
+            texture,
         }
     }
 }

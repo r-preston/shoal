@@ -1,90 +1,75 @@
 use crate::utility::*;
+use crate::world::World;
 use cgmath::SquareMatrix;
 use cgmath::{Angle, InnerSpace, MetricSpace};
-use wgpu::util::DeviceExt;
-use wgpu::BindGroupLayoutDescriptor;
+use wgpu::hal::auxil::MAX_I32_BINDING_SIZE;
 
-pub struct CameraUniformBuffer {
-    pub bind_group: wgpu::BindGroup,
-    pub buffer: wgpu::Buffer,
-    pub layout: wgpu::BindGroupLayout,
-    pub matrix: [[f32; 4]; 4],
+struct Perspective {
+    fovy: Radians,
+    aspect: f32,
+    near: f32,
+    far: f32,
+    matrix: Mat4,
+}
+
+impl Perspective {
+    pub fn new(fovy: Radians, aspect: f32, near: f32, far: f32) -> Perspective {
+        let mut perspective = Perspective {
+            fovy,
+            aspect,
+            near,
+            far,
+            matrix: Mat4::identity(),
+        };
+        perspective.calculate_matrix();
+        return perspective;
+    }
+
+    fn calculate_matrix(&mut self) {
+        self.matrix = Mat4::from(cgmath::PerspectiveFov::<f32> {
+            fovy: self.fovy,
+            aspect: self.aspect,
+            near: self.near,
+            far: self.far,
+        });
+    }
+
+    fn set_aspect(&mut self, aspect: f32) {
+        self.aspect = aspect;
+        self.calculate_matrix();
+    }
 }
 
 pub struct Camera {
     target: Position,
     distance: f32,
+    max_distance: f32,
     azimuthal_angle: Radians,
     polar_angle: Radians,
-    projection: Mat4,
-}
-
-impl CameraUniformBuffer {
-    pub fn new(device: &wgpu::Device) -> CameraUniformBuffer {
-        let buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
-            label: Some("Camera Buffer"),
-            contents: bytemuck::cast_slice(&[0.0f32; 20]),
-            usage: wgpu::BufferUsages::UNIFORM | wgpu::BufferUsages::COPY_DST,
-        });
-        let layout = device.create_bind_group_layout(&wgpu::BindGroupLayoutDescriptor {
-            entries: &[wgpu::BindGroupLayoutEntry {
-                binding: 0,
-                visibility: wgpu::ShaderStages::VERTEX_FRAGMENT,
-                ty: wgpu::BindingType::Buffer {
-                    ty: wgpu::BufferBindingType::Uniform,
-                    has_dynamic_offset: false,
-                    min_binding_size: None,
-                },
-                count: None,
-            }],
-            label: Some("camera_bind_group_layout"),
-        });
-        CameraUniformBuffer {
-            bind_group: device.create_bind_group(&wgpu::BindGroupDescriptor {
-                layout: &layout,
-                entries: &[wgpu::BindGroupEntry {
-                    binding: 0,
-                    resource: buffer.as_entire_binding(),
-                }],
-                label: Some("camera_bind_group"),
-            }),
-            buffer: buffer,
-            layout: layout,
-            matrix: cgmath::Matrix4::identity().into(),
-        }
-    }
-
-    pub fn update(
-        &self,
-        queue: &wgpu::Queue,
-        camera_matrix: &[[f32; 4]; 4],
-        camera_position: &[f32; 3],
-    ) {
-        queue.write_buffer(&self.buffer, 0, bytemuck::cast_slice(camera_matrix));
-        queue.write_buffer(
-            &self.buffer,
-            std::mem::size_of::<[[f32; 4]; 4]>() as wgpu::BufferAddress,
-            bytemuck::cast_slice(camera_position),
-        );
-    }
-
-    pub fn bind_group(&self) -> &wgpu::BindGroup {
-        &self.bind_group
-    }
-
-    pub fn bind_group_layout(&self) -> &wgpu::BindGroupLayout {
-        &self.layout
-    }
+    perspective: Perspective,
 }
 
 impl Camera {
-    pub fn new(distance: f32) -> Camera {
+    const RADIAL_SENSITIVITY: f32 = 1.0;
+    const ANGULAR_SENSITIVITY: f32 = 0.075;
+    const DEFAULT_DISTANCE: f32 = 1.5;
+    const MAX_DISTANCE: f32 = 4.0;
+
+    pub fn new(world: &World, config: &wgpu::SurfaceConfiguration) -> Camera {
+        let distance = world.size() * Self::DEFAULT_DISTANCE;
+        let max_distance = world.size() * Self::MAX_DISTANCE;
         Self {
             target: Camera::default_target(),
             distance,
+            max_distance,
             azimuthal_angle: Radians(0.0),
             polar_angle: Radians(0.0),
-            projection: cgmath::Matrix4::identity(),
+            perspective: Perspective::new(
+                Radians::from(Degrees(90.0)),
+                (config.width as f32) / (config.height as f32),
+                0.5,
+                max_distance + world.size(),
+            ),
         }
     }
 
@@ -92,20 +77,12 @@ impl Camera {
         Direction::new(0.0, 0.0, 1.0)
     }
 
-    fn radial_sensitivity() -> f32 {
-        1.0
-    }
-
-    fn angular_sensitivity() -> f32 {
-        0.075
-    }
-
     fn default_target() -> Position {
         Position::new(0.0, 0.0, 0.0)
     }
 
-    pub fn set_projection(&mut self, matrix: Mat4) {
-        self.projection = matrix;
+    pub fn set_aspect(&mut self, ratio: f32) {
+        self.perspective.set_aspect(ratio);
     }
 
     pub fn position(&self) -> Position {
@@ -126,16 +103,16 @@ impl Camera {
     }
 
     pub fn projection_matrix(&self) -> Mat4 {
-        OPENGL_TO_WGPU_MATRIX * self.projection
+        OPENGL_TO_WGPU_MATRIX * self.perspective.matrix
     }
 
     pub fn move_in_out(&mut self, amount: f32) {
-        self.distance += amount * Camera::radial_sensitivity();
+        self.distance += amount * Self::RADIAL_SENSITIVITY;
         self.distance = f32::max(1.0, self.distance);
     }
 
     pub fn move_up_down(&mut self, amount: f32) {
-        let new_angle = self.polar_angle.0 + (amount * Camera::angular_sensitivity());
+        let new_angle = self.polar_angle.0 + (amount * Self::ANGULAR_SENSITIVITY);
         self.polar_angle = Radians(
             new_angle
                 .min(Radians::turn_div_4().0 - 0.05)
@@ -144,7 +121,7 @@ impl Camera {
     }
 
     pub fn move_left_right(&mut self, amount: f32) {
-        self.azimuthal_angle += Radians(amount * Camera::angular_sensitivity());
+        self.azimuthal_angle += Radians(amount * Self::ANGULAR_SENSITIVITY);
         self.azimuthal_angle = self.azimuthal_angle.normalize();
     }
 }

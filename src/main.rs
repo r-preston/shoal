@@ -8,7 +8,7 @@ mod utility;
 mod world;
 
 use crate::utility::*;
-use renderer::{camera::Camera, Renderer};
+use renderer::Renderer;
 use std::{
     alloc::System,
     time::{Duration, SystemTime},
@@ -57,18 +57,12 @@ fn main() {
 
 struct State {
     world: World,
-    camera: Camera,
     frame: u32,
 }
 
 impl State {
     pub fn new(world: World) -> State {
-        let camera = Camera::new(1.3 * world.size());
-        Self {
-            world,
-            camera,
-            frame: 0,
-        }
+        Self { world, frame: 0 }
     }
 
     pub fn frame(&self) -> u32 {
@@ -81,23 +75,8 @@ impl State {
 
         let event_loop = EventLoop::new().unwrap();
         let window = WindowBuilder::new().build(&event_loop).unwrap();
-        let perspective = cgmath::PerspectiveFov::<f32> {
-            fovy: Radians::from(Degrees(90.0)),
-            aspect: (window.inner_size().width as f32) / (window.inner_size().height as f32),
-            near: 1.0,
-            far: self.world.size() * 4.0,
-        };
-        self.camera.set_projection(Mat4::from(perspective));
-        let mut renderer = Renderer::new(&window).await;
 
-        let transform_cursor = |x: f64, y: f64| -> (f32, f32) {
-            (
-                1.0 - 2.0 * (x as f32 / window.inner_size().width as f32),
-                2.0 * (y as f32 / window.inner_size().height as f32) - 1.0,
-            )
-        };
-
-        let mut mouse_pos = (0.0, 0.0);
+        let mut renderer = Renderer::new(&window, &self.world).await;
 
         let mut last_frame = SystemTime::now();
         let _ = event_loop.run(move |event, control_flow| {
@@ -119,27 +98,6 @@ impl State {
                                 ..
                             } => control_flow.exit(),
 
-                            WindowEvent::CursorMoved {
-                                position: mouse_position,
-                                ..
-                            } => {
-                                mouse_pos = transform_cursor(mouse_position.x, mouse_position.y);
-                            }
-
-                            WindowEvent::MouseWheel {
-                                delta: scroll_delta,
-                                ..
-                            } => match scroll_delta {
-                                MouseScrollDelta::LineDelta(x, y) => {
-                                    let scroll_sensitivity = -1.0;
-                                    self.camera.move_in_out(scroll_sensitivity * y);
-                                }
-                                MouseScrollDelta::PixelDelta(pos) => {
-                                    let scroll_sensitivity = -1.0;
-                                    self.camera.move_in_out((scroll_sensitivity * pos.y) as f32);
-                                }
-                            },
-
                             WindowEvent::Resized(physical_size) => {
                                 renderer.resize(*physical_size);
                             }
@@ -157,28 +115,11 @@ impl State {
                                 self.frame += 1;
                                 last_frame = SystemTime::now();
 
-                                // move camera. if cursor moves out of deadzone, move proportionally to distance outside deadzone
-                                let deadzone = (0.25f32, 0.99f32); // inner and outer edges from center
-                                let outside_deadzone = |x: f32| -> bool {
-                                    x.abs() > deadzone.0 && x.abs() < deadzone.1
-                                };
-                                let distance_beyond_deadzone = |x: f32| -> f32 {
-                                    x.signum() * (x.abs() - deadzone.0).max(0.0)
-                                };
-                                if outside_deadzone(mouse_pos.0) {
-                                    self.camera
-                                        .move_left_right(distance_beyond_deadzone(mouse_pos.0));
-                                }
-                                if outside_deadzone(mouse_pos.1) {
-                                    self.camera
-                                        .move_up_down(distance_beyond_deadzone(mouse_pos.1));
-                                }
-
                                 // update sim
                                 self.world.update();
-                                renderer.update(&mut self.world, &self.camera);
+                                renderer.update(&mut self.world);
 
-                                match renderer.render(&self.camera, &self.world) {
+                                match renderer.render(&self.world) {
                                     Ok(_) => {}
 
                                     // Reconfigure the surface if it's lost or outdated

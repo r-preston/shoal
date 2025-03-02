@@ -1,10 +1,15 @@
-pub mod camera;
+mod camera;
 mod pipelines;
+mod uniform;
 
-use crate::{utility::Mat4, Camera, World};
+use crate::{
+    utility::{Degrees, Mat4, Radians},
+    World,
+};
+use camera::Camera;
 use pipelines::{texture::Texture, Pipelines};
 use wgpu::Buffer;
-use winit::{event::WindowEvent, window::Window};
+use winit::{event::*, window::Window};
 
 pub struct Renderer<'a> {
     surface: wgpu::Surface<'a>,
@@ -13,13 +18,15 @@ pub struct Renderer<'a> {
     config: wgpu::SurfaceConfiguration,
     size: winit::dpi::PhysicalSize<u32>,
     window: &'a Window,
+    camera: Camera,
     depth_texture: Texture,
     pipelines: Pipelines,
+    mouse_pos: (f32, f32),
 }
 
 impl<'a> Renderer<'a> {
     // Creating some of the wgpu types requires async code
-    pub async fn new(window: &'a Window) -> Renderer<'a> {
+    pub async fn new(window: &'a Window, world: &World) -> Renderer<'a> {
         let size = window.inner_size();
 
         // The instance is a handle to our GPU
@@ -88,6 +95,8 @@ impl<'a> Renderer<'a> {
 
         let pipelines = Pipelines::generate(&device, &config, &queue);
 
+        let camera = Camera::new(world, &config);
+
         Self {
             surface,
             device,
@@ -95,8 +104,10 @@ impl<'a> Renderer<'a> {
             config,
             size,
             window,
+            camera,
             depth_texture,
             pipelines,
+            mouse_pos: (0.0, 0.0),
         }
     }
 
@@ -114,24 +125,70 @@ impl<'a> Renderer<'a> {
             self.config.width = new_size.width;
             self.config.height = new_size.height;
             self.surface.configure(&self.device, &self.config);
-            // !todo
-            //self.camera.aspect = self.config.width as f32 / self.config.height as f32;
+            self.camera
+                .set_aspect(self.config.width as f32 / self.config.height as f32);
             self.depth_texture = Texture::create_depth_texture(&self.device, &self.config);
         }
     }
 
     pub fn input(&mut self, event: &WindowEvent) -> bool {
-        false
+        match event {
+            WindowEvent::CursorMoved {
+                position: mouse_position,
+                ..
+            } => {
+                self.mouse_pos = (
+                    1.0 - 2.0 * (mouse_position.x as f32 / self.config.width as f32),
+                    2.0 * (mouse_position.y as f32 / self.config.height as f32) - 1.0,
+                );
+                return true;
+            }
+
+            WindowEvent::MouseWheel {
+                delta: scroll_delta,
+                ..
+            } => {
+                match scroll_delta {
+                    MouseScrollDelta::LineDelta(x, y) => {
+                        self.camera.move_in_out(-y);
+                    }
+                    MouseScrollDelta::PixelDelta(pos) => {
+                        self.camera.move_in_out(-pos.y as f32);
+                    }
+                }
+                return true;
+            }
+
+            _ => {
+                // event not handled here
+                return false;
+            }
+        };
     }
 
-    pub fn update(&mut self, world: &mut World, camera: &Camera) {
+    pub fn update(&mut self, world: &mut World) {
+        // update camera.
+        // move camera. if cursor moves out of deadzone, move proportionally to distance outside deadzone
+        let deadzone = (0.25f32, 0.99f32); // inner and outer edges from center
+        let outside_deadzone = |x: f32| -> bool { x.abs() > deadzone.0 && x.abs() < deadzone.1 };
+        let distance_beyond_deadzone =
+            |x: f32| -> f32 { x.signum() * (x.abs() - deadzone.0).max(0.0) };
+        if outside_deadzone(self.mouse_pos.0) {
+            self.camera
+                .move_left_right(distance_beyond_deadzone(self.mouse_pos.0));
+        }
+        if outside_deadzone(self.mouse_pos.1) {
+            self.camera
+                .move_up_down(distance_beyond_deadzone(self.mouse_pos.1));
+        }
+        // update buffers
         for pipeline in self.pipelines.mutable_pipelines() {
             pipeline.update_instances(world);
-            pipeline.update_camera(&self.queue, camera);
+            pipeline.update_camera(&self.queue, &self.camera);
         }
     }
 
-    pub fn render(&mut self, camera: &Camera, world: &World) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, world: &World) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
