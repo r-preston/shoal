@@ -43,6 +43,7 @@ impl Perspective {
 pub struct Camera {
     target: Position,
     distance: f32,
+    min_distance: f32,
     max_distance: f32,
     azimuthal_angle: Radians,
     polar_angle: Radians,
@@ -52,22 +53,25 @@ pub struct Camera {
 impl Camera {
     const RADIAL_SENSITIVITY: f32 = 1.0;
     const ANGULAR_SENSITIVITY: f32 = 0.075;
-    const DEFAULT_DISTANCE: f32 = 1.5;
-    const MAX_DISTANCE: f32 = 4.0;
+    const DEFAULT_DISTANCE_MULTIPLIER: f32 = 1.5;
+    const MIN_DISTANCE: f32 = 1.0;
+    const MAX_DISTANCE_MULTIPLIER: f32 = 4.0;
 
     pub fn new(world: &World, config: &wgpu::SurfaceConfiguration) -> Camera {
-        let distance = world.size() * Self::DEFAULT_DISTANCE;
-        let max_distance = world.size() * Self::MAX_DISTANCE;
+        let distance = world.size() * Self::DEFAULT_DISTANCE_MULTIPLIER;
+        let max_distance = world.size() * Self::MAX_DISTANCE_MULTIPLIER;
+        let min_distance = Self::MIN_DISTANCE;
         Self {
             target: Camera::default_target(),
             distance,
+            min_distance,
             max_distance,
             azimuthal_angle: Radians(0.0),
             polar_angle: Radians(0.0),
             perspective: Perspective::new(
                 Radians::from(Degrees(90.0)),
                 (config.width as f32) / (config.height as f32),
-                0.5,
+                min_distance,
                 max_distance + world.size(),
             ),
         }
@@ -108,7 +112,8 @@ impl Camera {
 
     pub fn move_in_out(&mut self, amount: f32) {
         self.distance += amount * Self::RADIAL_SENSITIVITY;
-        self.distance = f32::max(1.0, self.distance);
+        self.distance = f32::max(self.min_distance, self.distance);
+        self.distance = f32::min(self.max_distance, self.distance);
     }
 
     pub fn move_up_down(&mut self, amount: f32) {

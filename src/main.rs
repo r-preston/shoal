@@ -21,25 +21,21 @@ use winit::{
 };
 use world::World;
 
-/*
-// things I will need
-fish - flocking, try and stay in sphere, avoid predators. need velocity, position
-sharks - roam near prey, sometimes attack
-world - hold list of actors, passes data to renderer
-renderer (main) - track timer and draw things
-camera - moveable
+const WORLD_RADIUS: f32 = 10.0;
+const CELL_SIZE: f32 = 1.0;
+const GRID_DIVISIONS: u32 = (2.0 * WORLD_RADIUS / CELL_SIZE) as u32;
+const FISH_COUNT: u32 = 1;
+const SHARK_COUNT: u32 = 0;
 
-// workflow:
-have an array of fish positions and velocities
-create a density and velocity field map from fish positions each tick
-update all fish with using these maps
-update predators using maps
-multiple density maps? fish vs threat
-*/
 fn main() {
     let start = SystemTime::now();
 
-    let mut state = State::new(World::new(5.0, 5, 10, 0));
+    let mut state = State::new(World::new(
+        WORLD_RADIUS,
+        GRID_DIVISIONS,
+        FISH_COUNT,
+        SHARK_COUNT,
+    ));
     pollster::block_on(state.run());
 
     let end = SystemTime::now();
@@ -116,7 +112,7 @@ impl State {
                                 last_frame = SystemTime::now();
 
                                 // update sim
-                                self.world.update();
+                                self.world.update(self.frame);
                                 renderer.update(&mut self.world);
 
                                 match renderer.render(&self.world) {
