@@ -1,3 +1,5 @@
+use std::iter::Enumerate;
+
 use crate::utility::Position;
 
 pub struct Field<FieldType> {
@@ -26,19 +28,28 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
     }
 
     pub fn field_value(&self, pos: &Position) -> FieldType {
-        self.data[self.data_location(pos)]
+        self.data[self.index_from_position(pos)]
     }
 
-    pub fn set_field(&mut self, value: &FieldType) {
-        self.data.fill(*value);
+    pub fn set_field(&mut self, value: FieldType) {
+        self.data.fill(value);
     }
 
-    pub fn add_to_field(&mut self, pos: &Position, value: &FieldType) {
-        let index = self.data_location(pos);
-        self.data[index] += *value;
+    pub fn add_to_field(&mut self, pos: &Position, value: FieldType) {
+        let index = self.index_from_position(pos);
+        self.data[index] += value;
     }
 
-    fn data_location(&self, pos: &Position) -> usize {
+    pub fn data(&self) -> Enumerate<std::slice::Iter<FieldType>> {
+        self.data.iter().enumerate()
+    }
+
+    pub fn position_from_index(&self, index: usize) -> Position {
+        Position::new(0.0, 0.0, 0.0)
+    }
+
+    // !TODO: does this work? had a panic
+    fn index_from_position(&self, pos: &Position) -> usize {
         let x = (((pos.x + self.size) * self.scale) + 0.5).floor() as u32;
         let y = (((pos.y + self.size) * self.scale) + 0.5).floor() as u32;
         let z = (((pos.z + self.size) * self.scale) + 0.5).floor() as u32;
