@@ -45,13 +45,12 @@ impl World {
         // process:
         // - update fields from actors
         // - update actors based on field values
-
+        
         for fish in self.fish.iter() {
             self.fish_density.add_to_field(fish.position(), 1);
             self.fish_direction
                 .add_to_field(fish.position(), fish.velocity().normalize());
         }
-
         // fish behaviour:
         // - avoid predators
         // - don't go outside world boundary
@@ -76,6 +75,7 @@ impl World {
             //fish.update_velocity(self.fish_density);
             //fish.move();
         }
+        
     }
 
     pub fn fish(&self) -> &Vec<Fish> {

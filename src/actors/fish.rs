@@ -19,8 +19,12 @@ impl Fish {
         use rand::Rng;
 
         let mut rng = rand::rng();
-        let random: [f32; 6] = rng.random();
-        let position = Vec3::new(random[0], random[1], random[2]).normalize_to(world_size);
+        let mut random: [f32; 6] = rng.random();
+        let random_scale: f32 = world_size * rng.random::<f32>();
+        for r in random.iter_mut() {
+            *r = 2.0 * (*r) - 1.0;
+        }
+        let position = Vec3::new(random[0], random[1], random[2]).normalize_to(random_scale);
         Fish {
             m_position: Position::new(position.x, position.y, position.z),
             m_velocity: Velocity::new(random[3], random[4], random[5])

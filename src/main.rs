@@ -22,9 +22,8 @@ use winit::{
 use world::World;
 
 const WORLD_RADIUS: f32 = 10.0;
-const CELL_SIZE: f32 = 1.0;
-const GRID_DIVISIONS: u32 = (2.0 * WORLD_RADIUS / CELL_SIZE) as u32;
-const FISH_COUNT: u32 = 1;
+const GRID_DIVISIONS: u32 = 15; // should be an odd number
+const FISH_COUNT: u32 = 10;
 const SHARK_COUNT: u32 = 0;
 
 fn main() {

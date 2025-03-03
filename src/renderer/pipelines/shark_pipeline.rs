@@ -139,14 +139,14 @@ impl Pipeline for SharkPipeline {
             model_matrices.push(instance.to_raw());
         }
 
-        if world.fish().len() != self.num_instances as usize {
+        if world.sharks().len() != self.num_instances as usize {
             // if buffer is wrong size, recreate it
             self.instance_buffer = device.create_buffer_init(&wgpu::util::BufferInitDescriptor {
                 label: Some("Shark Instance Buffer"),
                 contents: bytemuck::cast_slice(model_matrices.as_slice()),
                 usage: wgpu::BufferUsages::VERTEX | wgpu::BufferUsages::COPY_DST,
             });
-            self.num_instances = world.fish().len().try_into().unwrap();
+            self.num_instances = world.sharks().len().try_into().unwrap();
         } else {
             // copy data into instance buffer
             queue.write_buffer(
