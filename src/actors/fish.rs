@@ -1,4 +1,5 @@
 use crate::actors::Actor;
+use crate::utility::Direction;
 use crate::utility::Position;
 use crate::utility::Vec3;
 use crate::utility::Velocity;
@@ -7,12 +8,12 @@ use cgmath::InnerSpace;
 use rand::prelude::*;
 
 pub struct Fish {
-    m_position: Position,
-    m_velocity: Velocity,
+    position: Position,
+    velocity: Velocity,
 }
 
-const DEFAULT_VELOCITY: f32 = 0.05;
-const MAX_VELOCITY: f32 = 0.1;
+const DEFAULT_SPEED: f32 = 0.05;
+const FLEE_SPEED: f32 = 0.1;
 
 impl Fish {
     pub fn new(world_size: f32) -> Fish {
@@ -26,18 +27,30 @@ impl Fish {
         }
         let position = Vec3::new(random[0], random[1], random[2]).normalize_to(random_scale);
         Fish {
-            m_position: Position::new(position.x, position.y, position.z),
-            m_velocity: Velocity::new(random[3], random[4], random[5])
-                .normalize_to(DEFAULT_VELOCITY),
+            position: Position::new(position.x, position.y, position.z),
+            velocity: Velocity::new(random[3], random[4], random[5])
+                .normalize_to(DEFAULT_SPEED),
         }
+    }
+
+    // !todo: implement a max turning speed
+    pub fn move_towards(&mut self, direction: Velocity, is_afraid: bool) {
+        self.velocity = direction.normalize_to(if is_afraid {FLEE_SPEED} else {DEFAULT_SPEED});
+        self.update_position();
     }
 }
 
 impl Actor for Fish {
     fn position(&self) -> &Position {
-        return &self.m_position;
+        &self.position
+    }
+    fn mutable_position(&mut self) -> &mut Position {
+        &mut self.position
     }
     fn velocity(&self) -> &Velocity {
-        return &self.m_velocity;
+        &self.velocity
+    }
+    fn mutable_velocity(&mut self) -> &mut Velocity {
+        &mut self.velocity
     }
 }

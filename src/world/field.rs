@@ -7,6 +7,7 @@ use crate::utility::Position;
 
 pub struct Field<FieldType> {
     data: Vec<FieldType>,
+    default_value: FieldType,
     cells_per_row: u32,
     world_size: f32,     // radius of sphere, equals half of total grid width
     position_shift: f32, // = cells_per_row / 2
@@ -23,6 +24,7 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
         let half_cells_per_row = (cells_per_row as f32) / 2.0;
         let mut field = Field {
             data: Vec::new(),
+            default_value,
             cells_per_row,
             world_size,
             position_shift: half_cells_per_row,
@@ -36,8 +38,16 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
         return field;
     }
 
+    pub fn clear(&mut self) {
+        self.data.fill(self.default_value);
+    }
+
     pub fn field_value(&self, pos: &Position) -> FieldType {
-        self.data[self.index_from_position(pos)]
+        self.field_value_from_index(self.index_from_position(pos))
+    }
+
+    pub fn field_value_from_index(&self, index: usize) -> FieldType {
+        self.data[index]
     }
 
     pub fn set_field(&mut self, value: FieldType) {
@@ -67,7 +77,7 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
         )
     }
 
-    fn index_from_position(&self, pos: &Position) -> usize {
+    pub fn index_from_position(&self, pos: &Position) -> usize {
         let scale_component = |x: f32| -> u32 {
             (pos.x * self.position_scale + self.position_shift)
                 .floor()

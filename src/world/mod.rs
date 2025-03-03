@@ -6,7 +6,7 @@ use crate::actors::fish::Fish;
 use crate::actors::shark::Shark;
 use crate::actors::Actor;
 use crate::utility::Velocity;
-use cgmath::InnerSpace;
+use cgmath::{InnerSpace, MetricSpace};
 use field::Field;
 
 pub struct World {
@@ -16,6 +16,10 @@ pub struct World {
     fish_density: Field<u32>,
     fish_direction: Field<Velocity>,
 }
+
+// squared distance from which fish will start running from threats
+const FISH_FEAR_DISTANCE2: f32 = 10.0;
+const MAX_FISH_DENSITY: u32 = 10;
 
 impl World {
     pub fn new(radius: f32, grid_size: u32, fish_count: u32, shark_count: u32) -> World {
@@ -45,7 +49,8 @@ impl World {
         // process:
         // - update fields from actors
         // - update actors based on field values
-        
+        self.fish_density.clear();
+        self.fish_direction.clear();
         for fish in self.fish.iter() {
             self.fish_density.add_to_field(fish.position(), 1);
             self.fish_direction
@@ -58,24 +63,61 @@ impl World {
         // - align with local fish direction
         // - don't overcrowd current cell
         for fish in self.fish.iter_mut() {
-            let avg_direction = self.fish_direction.field_value(fish.position());
-            let densest_cell = self.fish_density.data().max_by(
-                |cell_a: &(usize, &u32), cell_b: &(usize, &u32)| -> Ordering {
-                    // !TODO: filter out cells too far away
-                    cell_a.cmp(cell_b)
-                },
-            );
-            for cell in self.fish_density.data() {}
             // work out:
-            // figure out local direction
-            // figure out centre of local density
+            // average fish direction in local cell
+            // cell with greatest density of fish
             // nearest shark
             // current cell density
+            let current_cell_index = self.fish_density.index_from_position(fish.position());
+            let current_cell_density = self.fish_density.field_value_from_index(current_cell_index);
+            let current_cell_location = self
+                .fish_density
+                .position_from_index(current_cell_index as u32);
+            let current_cell_direction = self
+                .fish_direction
+                .field_value_from_index(current_cell_index);
 
-            //fish.update_velocity(self.fish_density);
-            //fish.move();
+            let densest_cell = self.fish_density.data().max_by(
+                |cell_a: &(usize, &u32), cell_b: &(usize, &u32)| -> Ordering {
+                    cell_a.1.cmp(cell_b.1)
+                },
+            );
+            let densest_cell_location = self.fish_density.position_from_index(
+                densest_cell
+                    .unwrap_or_else(|| -> (usize, &u32) { (0, &0) })
+                    .0 as u32,
+            );
+
+            let nearest_shark =
+                self.sharks
+                    .iter()
+                    .min_by(|shark_a: &&Shark, shark_b: &&Shark| -> Ordering {
+                        shark_a
+                            .position()
+                            .distance2(*fish.position())
+                            .total_cmp(&shark_b.position().distance2(*fish.position()))
+                    });
+
+            if !nearest_shark.is_none_or(|shark: &Shark| -> bool {
+                shark.position().distance2(*fish.position()) > FISH_FEAR_DISTANCE2
+            }) {
+                // shark nearby, run away from shark
+                println!("RUN");
+                fish.move_towards(fish.position() - nearest_shark.unwrap().position(), true);
+            } else if current_cell_density > MAX_FISH_DENSITY {
+                // current cell is too crowded, move away from centre of cell 
+                println!("TOO CROWDED: {current_cell_density}");
+                fish.move_towards(fish.position() - current_cell_location, false);
+            } else {
+                // no nearby shark, do flocking logic
+
+                // align with others
+                // if greatest density more than 1, move towards greatest density. otherwise, move towards (0,0)
+                // avoid leaving the world area
+
+
+            }
         }
-        
     }
 
     pub fn fish(&self) -> &Vec<Fish> {
