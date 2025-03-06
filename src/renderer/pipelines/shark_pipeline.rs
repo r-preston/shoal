@@ -17,49 +17,49 @@ use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
 #[rustfmt::skip]
 const SHARK_VERTICES: &[Vertex] = &[
     // nose
-    Vertex{position: [-2.2765,  0.0000,  0.0475], normal: [-1.0, 0.0, 0.0]},
+    Vertex{position: [-2.2765,  0.0000,  -0.0475], normal: [-1.0, 0.0, 0.0]},
     // back of head
-    Vertex{position: [ 0.0000,  0.0000,  1.4142], normal: [ 0.0,  0.0,  1.0]}, // T
+    Vertex{position: [ 0.0000,  0.0000,  -1.4142], normal: [ 0.0,  0.0,  -1.0]}, // T
     Vertex{position: [ 0.0000,  1.3181,  0.0000], normal: [ 0.0,  1.0,  0.0]}, // R
-    Vertex{position: [ 0.0000,  0.0000, -0.8000], normal: [ 0.0,  0.0, -1.0]}, // B
+    Vertex{position: [ 0.0000,  0.0000, 0.8000], normal: [ 0.0,  0.0, 1.0]}, // B
     Vertex{position: [ 0.0000, -1.3181,  0.0000], normal: [ 0.0, -1.0,  0.0]}, // L
     // tail base
-    Vertex{position: [ 5.1993,  0.0000,  0.4807], normal: [ 0.3338,  0.0000,  0.942643]}, // T
-    Vertex{position: [ 5.1925,  0.5398,  0.0000], normal: [ 0.3333,  0.9428,  0.003400]}, // R
-    Vertex{position: [ 5.1993,  0.0000, -0.4950], normal: [ 0.3031,  0.0000, -0.952969]}, // B
-    Vertex{position: [ 5.1925, -0.5398,  0.0000], normal: [ 0.3333, -0.9428,  0.003400]}, // L
-    Vertex{position: [ 6.0382,  0.0000,  0.0000], normal: [ 0.4557,  0.8901,  0.002100]}, // tip R
-    Vertex{position: [ 6.0382,  0.0000,  0.0000], normal: [ 0.4557, -0.8901,  0.002100]}, // tip L
+    Vertex{position: [ 5.1993,  0.0000, -0.4807], normal: [ 0.3338,  0.0000,  -0.942643]}, // T
+    Vertex{position: [ 5.1925,  0.5398,  0.0000], normal: [ 0.3333,  0.9428,  -0.003400]}, // R
+    Vertex{position: [ 5.1993,  0.0000, 0.4950], normal: [ 0.3031,  0.0000, 0.952969]}, // B
+    Vertex{position: [ 5.1925, -0.5398,  0.0000], normal: [ 0.3333, -0.9428,  -0.003400]}, // L
+    Vertex{position: [ 6.0382,  0.0000,  0.0000], normal: [ 0.4557,  0.8901,  -0.002100]}, // tip R
+    Vertex{position: [ 6.0382,  0.0000,  0.0000], normal: [ 0.4557, -0.8901,  -0.002100]}, // tip L
     // tail fin right side
-    Vertex{position: [ 6.2581,  0.0000, -1.7362], normal: [0.0, 1.0, 0.0]}, // bottom
-    Vertex{position: [ 5.1993,  0.0000, -0.4950], normal: [0.0, 1.0, 0.0]}, // bottom root
-    Vertex{position: [ 6.3173,  0.0000,  2.4552], normal: [0.0, 1.0, 0.0]}, // top 
-    Vertex{position: [ 5.1993,  0.0000,  0.4807], normal: [0.0, 1.0, 0.0]}, // top root
+    Vertex{position: [ 6.2581,  0.0000, 1.7362], normal: [0.0, 1.0, 0.0]}, // bottom
+    Vertex{position: [ 5.1993,  0.0000, 0.4950], normal: [0.0, 1.0, 0.0]}, // bottom root
+    Vertex{position: [ 6.3173,  0.0000,  -2.4552], normal: [0.0, 1.0, 0.0]}, // top 
+    Vertex{position: [ 5.1993,  0.0000,  -0.4807], normal: [0.0, 1.0, 0.0]}, // top root
     // tail fin left side
-    Vertex{position: [ 6.2581,  0.0000, -1.7362], normal: [0.0, -1.0, 0.0]}, // bottom
-    Vertex{position: [ 5.1993,  0.0000, -0.4950], normal: [0.0, -1.0, 0.0]}, // bottom root
-    Vertex{position: [ 6.3173,  0.0000,  2.4552], normal: [0.0, -1.0, 0.0]}, // top 
-    Vertex{position: [ 5.1993,  0.0000,  0.4807], normal: [0.0, -1.0, 0.0]}, // top root
+    Vertex{position: [ 6.2581,  0.0000, 1.7362], normal: [0.0, -1.0, 0.0]}, // bottom
+    Vertex{position: [ 5.1993,  0.0000, 0.4950], normal: [0.0, -1.0, 0.0]}, // bottom root
+    Vertex{position: [ 6.3173,  0.0000,  -2.4552], normal: [0.0, -1.0, 0.0]}, // top 
+    Vertex{position: [ 5.1993,  0.0000,  -0.4807], normal: [0.0, -1.0, 0.0]}, // top root
     // dorsal fin right side
-    Vertex{position: [ 1.2823,  0.0000,  1.1000], normal: [0.0,  1.0, 0.0]},
-    Vertex{position: [ 3.0444,  0.0000,  2.2953], normal: [0.0,  1.0, 0.0]},
-    Vertex{position: [ 2.9776,  0.0000,  0.8500], normal: [0.0,  1.0, 0.0]},
+    Vertex{position: [ 1.2823,  0.0000,  -1.1000], normal: [0.0,  1.0, 0.0]},
+    Vertex{position: [ 3.0444,  0.0000,  -2.2953], normal: [0.0,  1.0, 0.0]},
+    Vertex{position: [ 2.9776,  0.0000,  -0.8500], normal: [0.0,  1.0, 0.0]},
     // dorsal fin left side
-    Vertex{position: [ 1.2823,  0.0000,  1.1000], normal: [0.0, -1.0, 0.0]},
-    Vertex{position: [ 3.0444,  0.0000,  2.2953], normal: [0.0, -1.0, 0.0]},
-    Vertex{position: [ 2.9776,  0.0000,  0.8500], normal: [0.0, -1.0, 0.0]},
+    Vertex{position: [ 1.2823,  0.0000,  -1.1000], normal: [0.0, -1.0, 0.0]},
+    Vertex{position: [ 3.0444,  0.0000,  -2.2953], normal: [0.0, -1.0, 0.0]},
+    Vertex{position: [ 2.9776,  0.0000,  -0.8500], normal: [0.0, -1.0, 0.0]},
     // right fin upper
-    Vertex{position: [ 1.4013,  1.1080,  0.0000], normal: [ 0.1301,  0.4270,  0.8948]}, // root
-    Vertex{position: [ 1.9136,  3.1625, -0.3939], normal: [-0.0272,  0.1817,  0.9830]}, // tip
+    Vertex{position: [ 1.4013,  1.1080,  0.0000], normal: [ 0.1301,  0.4270,  -0.8948]}, // root
+    Vertex{position: [ 1.9136,  3.1625, 0.3939], normal: [-0.0272,  0.1817,  -0.9830]}, // tip
     // right fin lower
-    Vertex{position: [ 1.4013,  1.1080,  0.0000], normal: [-0.1301, -0.4270, -0.8948]}, // root
-    Vertex{position: [ 1.9136,  3.1625, -0.3939], normal: [ 0.0272, -0.1817, -0.9830]}, // tip
+    Vertex{position: [ 1.4013,  1.1080,  0.0000], normal: [-0.1301, -0.4270, 0.8948]}, // root
+    Vertex{position: [ 1.9136,  3.1625, 0.3939], normal: [ 0.0272, -0.1817, 0.9830]}, // tip
     // left fin upper
-    Vertex{position: [ 1.4013, -1.1080,  0.0000], normal: [ 0.1301,  0.4270,  0.8948]}, // root
-    Vertex{position: [ 1.9136, -3.1625, -0.3939], normal: [-0.0272,  0.1817,  0.9830]}, // tip
+    Vertex{position: [ 1.4013, -1.1080,  0.0000], normal: [ 0.1301,  0.4270,  -0.8948]}, // root
+    Vertex{position: [ 1.9136, -3.1625, 0.3939], normal: [-0.0272,  0.1817,  -0.9830]}, // tip
     // left fin lower
-    Vertex{position: [ 1.4013, -1.1080,  0.0000], normal: [-0.1301, -0.4270, -0.8948]}, // root
-    Vertex{position: [ 1.9136, -3.1625, -0.3939], normal: [ 0.0272, -0.1817, -0.9830]}, // tip
+    Vertex{position: [ 1.4013, -1.1080,  0.0000], normal: [-0.1301, -0.4270, 0.8948]}, // root
+    Vertex{position: [ 1.9136, -3.1625, 0.3939], normal: [ 0.0272, -0.1817, 0.9830]}, // tip
 ];
 
 #[rustfmt::skip]
@@ -85,7 +85,7 @@ const SHARK_INDICES: &[u16] = &[
     30, 29, 4,   4,  31, 32,
 ];
 
-const MODEL_SCALE: f32 = 1.0;
+const MODEL_SCALE: f32 = -1.0;
 
 pub struct SharkPipeline {
     render_pipeline: wgpu::RenderPipeline,

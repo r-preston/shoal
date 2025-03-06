@@ -1,16 +1,7 @@
 use crate::actors::Actor;
-use crate::utility::Direction;
-use crate::utility::Mat3;
-use crate::utility::Position;
-use crate::utility::Radians;
-use crate::utility::Vec3;
-use crate::utility::Velocity;
+use crate::utility::{Direction, Mat3, Position, Radians, Vec3, Velocity};
 use crate::world::World;
-use cgmath::InnerSpace;
-use cgmath::Matrix3;
-use cgmath::MetricSpace;
-use cgmath::Rotation3;
-use cgmath::Vector3;
+use cgmath::{InnerSpace, Matrix3, MetricSpace, Rotation3, Vector3};
 use rand::prelude::*;
 
 pub struct Fish {
@@ -22,11 +13,12 @@ pub struct Fish {
     direction_tweak: cgmath::Quaternion<f32>,
 }
 
-const DEFAULT_SPEED: f32 = 0.1;
-const FLEE_SPEED_MODIFIER: f32 = 2.0;
-const DEFAULT_TURN_SPEED_RADIANS: f32 = 0.025;
-
 impl Fish {
+    pub const FLEE_SPEED_MODIFIER: f32 = 2.0;
+    const DEFAULT_SPEED: f32 = 0.1;
+    const DEFAULT_TURN_SPEED_RADIANS: f32 = 0.025;
+    const ACCELERATION: f32 = 0.01;
+
     pub fn new(world_size: f32) -> Fish {
         use rand::Rng;
         let mut rng = rand::rng();
@@ -34,7 +26,7 @@ impl Fish {
 
         let distance_from_origin: f32 = world_size * random(0.0, 1.0);
 
-        let speed = DEFAULT_SPEED * random(0.6, 1.5);
+        let speed = Self::DEFAULT_SPEED * random(0.6, 1.5);
 
         let position = Position::new(random(-1.0, 1.0), random(-1.0, 1.0), random(-1.0, 1.0))
             .normalize_to(distance_from_origin);
@@ -50,21 +42,11 @@ impl Fish {
         Fish {
             field_index: 0,
             speed,
-            turn_speed: Radians(DEFAULT_TURN_SPEED_RADIANS * random(0.6, 1.5)),
+            turn_speed: Radians(Self::DEFAULT_TURN_SPEED_RADIANS * random(0.6, 1.5)),
             position,
             velocity,
             direction_tweak,
         }
-    }
-
-    // !todo: implement a max turning speed
-    pub fn move_towards(&mut self, direction: Velocity, is_afraid: bool) {
-        let mut axis = self.velocity.cross(direction).normalize();
-        if axis.magnitude2() == 0.0 {
-            axis = Vector3::new(0.0, 0.0, 1.0);
-        }
-        self.velocity = Mat3::from_axis_angle(axis, self.turn_speed) * self.velocity;
-        self.update_position();
     }
 
     pub fn field_index(&self) -> usize {
@@ -96,5 +78,17 @@ impl Actor for Fish {
     }
     fn mutable_velocity(&mut self) -> &mut Velocity {
         &mut self.velocity
+    }
+    fn turn_speed(&self) -> Radians {
+        self.turn_speed
+    }
+    fn acceleration(&self) -> f32 {
+        Self::ACCELERATION
+    }
+    fn speed_modifier(&self) -> f32 {
+        1.0
+    }
+    fn set_speed_modifier(&mut self, modifier: f32) {
+        ()
     }
 }

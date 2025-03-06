@@ -21,10 +21,10 @@ use winit::{
 };
 use world::World;
 
-const WORLD_RADIUS: f32 = 10.0;
-const GRID_DIVISIONS: u32 = 15; // should be an odd number
-const FISH_COUNT: u32 = 2000;
-const SHARK_COUNT: u32 = 0;
+const WORLD_RADIUS: f32 = 20.0;
+const GRID_DIVISIONS: u32 = 17; // should be an odd number
+const FISH_COUNT: u32 = 4000;
+const SHARK_COUNT: u32 = 1;
 
 fn main() {
     let start = SystemTime::now();

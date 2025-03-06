@@ -1,7 +1,8 @@
 mod field;
 
+use crate::actors::shark::Behaviour;
 use crate::actors::{fish::Fish, shark::Shark, Actor};
-use crate::utility::{Position, Vec3, Velocity};
+use crate::utility::{Direction, Position, Vec3, Velocity};
 use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Vector3};
 use field::Field;
 use std::cmp::Ordering;
@@ -18,7 +19,7 @@ pub struct World {
 }
 
 // squared distance from which fish will start running from threats
-const FISH_FEAR_DISTANCE2: f32 = 10.0;
+const FISH_FEAR_DISTANCE2: f32 = 64.0;
 const MAX_FISH_DENSITY: f32 = 20.0;
 const FISH_ALIGNMENT_WEIGHT: f32 = 0.1;
 const FISH_CENTERING_WEIGHT: f32 = 1.0;
@@ -47,7 +48,9 @@ impl World {
             .fish
             .resize_with(fish_count as usize, || -> Fish { Fish::new(radius) });
         world.fish.shrink_to_fit();
-        world.sharks.resize_with(shark_count as usize, Shark::new);
+        world
+            .sharks
+            .resize_with(shark_count as usize, || -> Shark { Shark::new(radius) });
         world.sharks.shrink_to_fit();
 
         // pre-calculate positions of grid cells
@@ -77,7 +80,7 @@ impl World {
 
     pub fn update(&mut self, time: u32) {
         // process:
-        // - update fields from actors
+        // - update fields from fish
         // - update actors based on field values
         self.fish_density.clear();
         self.fish_direction.clear();
@@ -138,13 +141,15 @@ impl World {
                 shark.position().distance2(*fish.position()) > FISH_FEAR_DISTANCE2
             }) {
                 // shark nearby, run away from shark
-                println!("RUN");
-                fish.move_towards(fish.position() - nearest_shark.unwrap().position(), true);
+                fish.move_in_direction(
+                    fish.position() - nearest_shark.unwrap().position(),
+                    Fish::FLEE_SPEED_MODIFIER,
+                );
             } else {
                 // no nearby shark, do flocking logic
-                // - align with others
-                // - if greatest density more than 1, move towards greatest density.
-                // - tendency to towards centre of the world
+                // - align with other nearby fish
+                // - move towards greatest local density of fish
+                // - tendency to move towards centre of the world
 
                 let tend_to_centre_weight =
                     FISH_CENTERING_WEIGHT * (1.0 - current_cell_density / MAX_FISH_DENSITY);
@@ -157,7 +162,42 @@ impl World {
                     // central tendency
                     -1.0 * ORIGIN_ATTRACTION_WEIGHT * f32::exp(fish.position().magnitude2() / self.radius.powf(1.5)) * fish.position();
 
-                fish.move_towards(direction, false);
+                fish.move_in_direction(direction, 1.0);
+            }
+        }
+
+        // behaviour:
+        // - evaluate current behaviour
+        // - if hunting, pick the greatest density of fish and charge at it until past that point
+        // - if roaming, patrol around the perimeter of the world
+        for shark in self.sharks.iter_mut() {
+            match shark.evaluate_behaviour() {
+                Behaviour::Roaming(_) => {
+                    if shark.position().magnitude2() < 0.8 * self.radius * self.radius {
+                        shark.move_in_direction(
+                            Direction::new(
+                                shark.position().x,
+                                shark.position().y,
+                                shark.preferred_depth() - shark.position().z,
+                            ),
+                            1.0,
+                        );
+                    } else {
+                        let perpendicular = shark.position().cross(Direction::new(0.0, 0.0, 1.0));
+                        shark.move_in_direction(
+                            Direction::new(perpendicular.x, perpendicular.y, 0.0),
+                            1.0,
+                        );
+                    }
+                }
+                Behaviour::Hunting(origin) => {
+                    if origin.dot(*shark.position())
+                        < -0.5 * origin.magnitude() * shark.position().magnitude()
+                    {
+                        shark.end_hunt();
+                    }
+                    shark.move_in_direction(-1.0 * origin, Shark::HUNT_SPEED_MODIFIER);
+                }
             }
         }
     }

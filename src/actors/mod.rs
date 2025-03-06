@@ -1,7 +1,7 @@
 pub mod fish;
 pub mod shark;
 
-use crate::utility::{Position, Velocity};
+use crate::utility::{Mat3, Position, Radians, Vec3, Velocity};
 use cgmath::{EuclideanSpace, InnerSpace, MetricSpace};
 
 pub trait Actor {
@@ -13,9 +13,26 @@ pub trait Actor {
     fn velocity(&self) -> &Velocity;
     fn mutable_velocity(&mut self) -> &mut Velocity;
 
-    fn update_position(&mut self) {
-        let v = *self.velocity();
+    fn turn_speed(&self) -> Radians;
+    fn acceleration(&self) -> f32;
+    fn speed_modifier(&self) -> f32;
+    fn set_speed_modifier(&mut self, modifier: f32);
+
+    fn update_position(&mut self, speed_modifier: f32) {
+        let acceleration = (speed_modifier - self.speed_modifier()).signum() * self.acceleration();
+        self.set_speed_modifier(self.speed_modifier() + acceleration);
+        let v = *self.velocity() * self.speed_modifier();
         *self.mutable_position() += v;
+    }
+
+    fn move_in_direction(&mut self, direction: Velocity, speed_modifier: f32) {
+        let mut axis = self.velocity().cross(direction).normalize();
+        if axis.magnitude2() == 0.0 {
+            axis = Vec3::new(0.0, 0.0, 1.0);
+        }
+        *self.mutable_velocity() =
+            Mat3::from_axis_angle(axis, self.turn_speed() * speed_modifier) * self.velocity();
+        self.update_position(speed_modifier);
     }
 
     // return distance of the Actor from the centre of the world
