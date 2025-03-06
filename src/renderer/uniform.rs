@@ -1,6 +1,4 @@
-use cgmath::SquareMatrix;
 use wgpu::util::DeviceExt;
-use wgpu::BindGroupLayoutDescriptor;
 
 pub struct UniformBuffer {
     pub bind_group: wgpu::BindGroup,

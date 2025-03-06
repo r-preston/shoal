@@ -1,9 +1,6 @@
-use std::thread::Thread;
-
 use crate::actors::Actor;
-use crate::utility::{Direction, Mat3, Position, Radians, Vec3, Velocity};
-use crate::world;
-use cgmath::{InnerSpace, Matrix3, MetricSpace, Rotation3, Vector3};
+use crate::utility::{Position, Radians, Velocity};
+use cgmath::InnerSpace;
 use rand::rngs::ThreadRng;
 
 #[derive(Copy, Clone)]
@@ -15,7 +12,6 @@ pub enum Behaviour {
 pub struct Shark {
     position: Position,
     velocity: Velocity,
-    base_speed: f32,
     speed_modifier: f32,
     behaviour: Behaviour, // current AI shark will follow
     roam_timer: u32,      // number of updates the shark has been using this AI
@@ -46,7 +42,6 @@ impl Shark {
         Shark {
             position,
             velocity,
-            base_speed: speed,
             speed_modifier: 1.0,
             behaviour: Behaviour::Roaming(60 * random(5.0, 20.0) as u32),
             roam_timer: 0,

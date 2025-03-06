@@ -1,8 +1,7 @@
 use crate::utility::*;
 use crate::world::World;
-use cgmath::{Angle, EuclideanSpace, InnerSpace, MetricSpace};
+use cgmath::{Angle, EuclideanSpace, InnerSpace};
 use cgmath::{Point3, SquareMatrix};
-use wgpu::hal::auxil::MAX_I32_BINDING_SIZE;
 
 struct Perspective {
     fovy: Radians,

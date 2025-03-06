@@ -1,18 +1,12 @@
 use crate::actors::Actor;
 use crate::renderer::camera::Camera;
 use crate::renderer::uniform::UniformBuffer;
-use crate::renderer::{
-    pipelines::{texture::Texture, Pipeline},
-    Renderer,
-};
-use crate::utility::{InstanceRaw, Mat3, Mat4, Position, Radians, Vec3, Vertex};
+use crate::renderer::
+    pipelines::{texture::Texture, Pipeline};
+use crate::utility::{InstanceRaw, Vertex};
 use crate::world::World;
-use cgmath::{Rotation3, SquareMatrix};
-use rand::prelude::*;
-use wgpu::core::instance;
 use wgpu::util::DeviceExt;
-use wgpu::{BindGroupLayout, Device, Instance, Queue, SurfaceConfiguration};
-use winit::{event::WindowEvent, window::Window};
+use wgpu::{Device, Queue, SurfaceConfiguration};
 
 use super::{INSTANCE_BUFFER_DESCRIPTOR, VERTEX_BUFFER_DESCRIPTOR};
 
@@ -45,7 +39,6 @@ const MODEL_SCALE: f32 = 1.0;
 pub struct FishPipeline {
     render_pipeline: wgpu::RenderPipeline,
     vertex_buffer: wgpu::Buffer,
-    num_vertices: u16,
     index_buffer: wgpu::Buffer,
     num_indices: u32,
     instance_buffer: wgpu::Buffer,
@@ -59,9 +52,6 @@ impl Pipeline for FishPipeline {
     }
     fn vertex_buffer(&self) -> &wgpu::Buffer {
         &self.vertex_buffer
-    }
-    fn num_vertices(&self) -> u16 {
-        self.num_vertices
     }
     fn index_buffer(&self) -> &wgpu::Buffer {
         &self.index_buffer
@@ -207,7 +197,6 @@ impl FishPipeline {
         FishPipeline {
             render_pipeline,
             vertex_buffer,
-            num_vertices: FISH_VERTICES.len() as u16,
             index_buffer,
             num_indices: FISH_INDICES.len() as u32,
             instance_buffer,

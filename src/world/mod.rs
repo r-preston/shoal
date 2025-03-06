@@ -2,8 +2,8 @@ mod field;
 
 use crate::actors::shark::Behaviour;
 use crate::actors::{fish::Fish, shark::Shark, Actor};
-use crate::utility::{Direction, Position, Vec3, Velocity};
-use cgmath::{EuclideanSpace, InnerSpace, MetricSpace, Vector3};
+use crate::utility::{Direction, Position, Velocity};
+use cgmath::{InnerSpace, MetricSpace};
 use field::Field;
 use std::cmp::Ordering;
 
@@ -78,7 +78,7 @@ impl World {
         return world;
     }
 
-    pub fn update(&mut self, time: u32) {
+    pub fn update(&mut self) {
         // process:
         // - update fields from fish
         // - update actors based on field values
@@ -92,7 +92,7 @@ impl World {
                 .add_to_field(idx, fish.velocity().normalize());
         }
         // calculate nearest centre of mass of
-        for (i, cell) in self.local_density_centre.data_enumerated() {
+        for i in 0..self.local_density_centre.cell_count() {
             let mut average_position = Position::new(0.0, 0.0, 0.0);
             let mut total_density: f32 = 0.0;
             for offset in self.grid_average_offsets.iter() {
@@ -121,7 +121,6 @@ impl World {
             // current cell density
             let current_cell_index = fish.field_index();
             let current_cell_density = self.fish_density.field_value(current_cell_index);
-            let current_cell_location = self.cell_positions.field_value(current_cell_index);
             let current_cell_direction = self.fish_direction.field_value(current_cell_index);
 
             // todo: be less shit

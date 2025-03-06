@@ -1,7 +1,4 @@
-use core::slice;
-use std::{cell, iter::Enumerate};
-
-use cgmath::{MetricSpace, Vector3};
+use cgmath::Vector3;
 use num_traits::Euclid;
 
 use crate::utility::Position;
@@ -59,19 +56,8 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
     }
     */
 
-    pub fn set_field(&mut self, value: FieldType) {
-        self.data.fill(value);
-    }
-
     pub fn add_to_field(&mut self, index: usize, value: FieldType) {
         self.data[index] += value;
-    }
-    pub fn add_to_field_at_position(&mut self, pos: &Position, value: FieldType) {
-        self.add_to_field(self.index_from_position(pos), value);
-    }
-
-    pub fn data_enumerated(&self) -> Enumerate<std::slice::Iter<FieldType>> {
-        self.data.iter().enumerate()
     }
 
     pub fn coords_from_index(&self, index: u32) -> Vector3<u32> {
@@ -94,14 +80,11 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
 
     pub fn index_from_position(&self, pos: &Position) -> usize {
         let scale_component = |x: f32| -> u32 {
-            (pos.x * self.position_scale + self.position_shift)
+            (x * self.position_scale + self.position_shift)
                 .floor()
                 .min(self.max_row_index)
                 .max(0.0) as u32
         };
-        let x = scale_component(pos.x);
-        let y = scale_component(pos.y);
-        let z = scale_component(pos.z);
         return usize::try_from(
             scale_component(pos.x)
                 + (scale_component(pos.y) * self.cells_per_row)

@@ -1,14 +1,10 @@
-use cgmath::EuclideanSpace;
-use cgmath::{Point3, Vector3, Vector4};
-use num_traits::Float;
-use std::ops::{AddAssign, Deref, DerefMut};
+use cgmath::Vector3;
 
 pub type Position = Vector3<f32>;
 pub type Velocity = Vector3<f32>;
 pub type Direction = Vector3<f32>;
 
 pub type Vec3 = Vector3<f32>;
-pub type Vec4 = Vector4<f32>;
 pub type Mat3 = cgmath::Matrix3<f32>;
 pub type Mat4 = cgmath::Matrix4<f32>;
 

@@ -1,12 +1,9 @@
 use crate::actors::Actor;
-use crate::utility::{Direction, Mat3, Position, Radians, Vec3, Velocity};
-use crate::world::World;
-use cgmath::{InnerSpace, Matrix3, MetricSpace, Rotation3, Vector3};
-use rand::prelude::*;
+use crate::utility::{Position, Radians, Vec3, Velocity};
+use cgmath::InnerSpace;
 
 pub struct Fish {
     field_index: usize,
-    speed: f32,
     turn_speed: Radians,
     position: Position,
     velocity: Velocity,
@@ -41,7 +38,6 @@ impl Fish {
 
         Fish {
             field_index: 0,
-            speed,
             turn_speed: Radians(Self::DEFAULT_TURN_SPEED_RADIANS * random(0.6, 1.5)),
             position,
             velocity,
@@ -88,7 +84,7 @@ impl Actor for Fish {
     fn speed_modifier(&self) -> f32 {
         1.0
     }
-    fn set_speed_modifier(&mut self, modifier: f32) {
+    fn set_speed_modifier(&mut self, _modifier: f32) {
         ()
     }
 }

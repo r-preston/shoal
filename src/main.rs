@@ -1,34 +1,24 @@
-#![allow(dead_code)]
-#![allow(unused_imports)]
-#![allow(unused_variables)]
-
 mod actors;
 mod renderer;
 mod utility;
 mod world;
 
-use crate::utility::*;
 use renderer::Renderer;
-use std::{
-    alloc::System,
-    time::{Duration, SystemTime},
-};
+use std::time::{Duration, SystemTime};
 use winit::{
     event::*,
-    event_loop::{ControlFlow, EventLoop},
+    event_loop::EventLoop,
     keyboard::{KeyCode, PhysicalKey},
-    window::{Window, WindowBuilder},
+    window::WindowBuilder,
 };
 use world::World;
 
 const WORLD_RADIUS: f32 = 20.0;
 const GRID_DIVISIONS: u32 = 17; // should be an odd number
 const FISH_COUNT: u32 = 4000;
-const SHARK_COUNT: u32 = 1;
+const SHARK_COUNT: u32 = 2;
 
 fn main() {
-    let start = SystemTime::now();
-
     let mut state = State::new(World::new(
         WORLD_RADIUS,
         GRID_DIVISIONS,
@@ -53,10 +43,6 @@ impl State {
             frame: 0,
             start: None,
         }
-    }
-
-    pub fn frame(&self) -> u32 {
-        self.frame
     }
 
     fn print_time_and_fps(&self) {
@@ -116,7 +102,7 @@ impl State {
                             WindowEvent::RedrawRequested => 'RedrawLabel: {
                                 if !self.world_update_ready {
                                     // update simulation
-                                    self.world.update(self.frame);
+                                    self.world.update();
                                     // update buffers
                                     renderer.update(&mut self.world);
                                     self.world_update_ready = true;

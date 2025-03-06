@@ -6,15 +6,11 @@ pub mod texture;
 use fish_pipeline::FishPipeline;
 use shark_pipeline::SharkPipeline;
 use skybox_pipeline::SkyboxPipeline;
-use texture::Texture;
 use wgpu::{Device, Queue, SurfaceConfiguration};
 
-use crate::renderer::Renderer;
-use crate::utility::{InstanceRaw, Position, Vertex};
+use crate::utility::{InstanceRaw, Vertex};
 use crate::world::World;
-
 use super::camera::Camera;
-use super::uniform::UniformBuffer;
 
 const VERTEX_BUFFER_DESCRIPTOR: wgpu::VertexBufferLayout<'static> = wgpu::VertexBufferLayout {
     array_stride: std::mem::size_of::<Vertex>() as wgpu::BufferAddress,
@@ -85,7 +81,6 @@ impl Pipelines {
 pub trait Pipeline {
     fn pipeline(&self) -> &wgpu::RenderPipeline;
 
-    fn num_vertices(&self) -> u16;
     fn vertex_buffer(&self) -> &wgpu::Buffer;
 
     fn num_indices(&self) -> u32;

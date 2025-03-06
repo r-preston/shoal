@@ -2,13 +2,9 @@ mod camera;
 mod pipelines;
 mod uniform;
 
-use crate::{
-    utility::{Degrees, Mat4, Radians},
-    World,
-};
+use crate::World;
 use camera::Camera;
 use pipelines::{texture::Texture, Pipelines};
-use wgpu::Buffer;
 use winit::{event::*, window::Window};
 
 pub struct Renderer<'a> {
@@ -149,7 +145,7 @@ impl<'a> Renderer<'a> {
                 ..
             } => {
                 match scroll_delta {
-                    MouseScrollDelta::LineDelta(x, y) => {
+                    MouseScrollDelta::LineDelta(_x, y) => {
                         self.camera.move_in_out(-y);
                     }
                     MouseScrollDelta::PixelDelta(pos) => {
@@ -188,7 +184,7 @@ impl<'a> Renderer<'a> {
         }
     }
 
-    pub fn render(&mut self, world: &World) -> Result<(), wgpu::SurfaceError> {
+    pub fn render(&mut self, _world: &World) -> Result<(), wgpu::SurfaceError> {
         let output = self.surface.get_current_texture()?;
         let view = output
             .texture
