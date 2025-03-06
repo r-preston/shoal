@@ -1,6 +1,7 @@
 use core::slice;
 use std::{cell, iter::Enumerate};
 
+use cgmath::{MetricSpace, Vector3};
 use num_traits::Euclid;
 
 use crate::utility::Position;
@@ -42,38 +43,52 @@ impl<FieldType: Copy + std::ops::AddAssign> Field<FieldType> {
         self.data.fill(self.default_value);
     }
 
-    pub fn field_value(&self, pos: &Position) -> FieldType {
-        self.field_value_from_index(self.index_from_position(pos))
+    pub fn cell_count(&self) -> usize {
+        self.data.len()
     }
 
-    pub fn field_value_from_index(&self, index: usize) -> FieldType {
-        self.data[index]
+    pub fn field_value(&self, index: usize) -> &FieldType {
+        &self.data[index]
     }
+    pub fn field_value_checked(&self, index: usize) -> Option<&FieldType> {
+        self.data.get(index)
+    }
+    /*
+    pub fn field_value_at_position(&self, pos: &Position) -> &FieldType {
+        &self.field_value(self.index_from_position(pos))
+    }
+    */
 
     pub fn set_field(&mut self, value: FieldType) {
         self.data.fill(value);
     }
 
-    pub fn add_to_field(&mut self, pos: &Position, value: FieldType) {
-        let index = self.index_from_position(pos);
+    pub fn add_to_field(&mut self, index: usize, value: FieldType) {
         self.data[index] += value;
     }
+    pub fn add_to_field_at_position(&mut self, pos: &Position, value: FieldType) {
+        self.add_to_field(self.index_from_position(pos), value);
+    }
 
-    pub fn data(&self) -> Enumerate<std::slice::Iter<FieldType>> {
+    pub fn data_enumerated(&self) -> Enumerate<std::slice::Iter<FieldType>> {
         self.data.iter().enumerate()
     }
 
-    pub fn position_from_index(&self, index: u32) -> Position {
+    pub fn coords_from_index(&self, index: u32) -> Vector3<u32> {
         let slice_size = self.cells_per_row * self.cells_per_row;
-        let (z_index, z_remainder) = index.div_rem_euclid(&slice_size);
-        let (y_index, x_index) = z_remainder.div_rem_euclid(&self.cells_per_row);
+        let (z, z_remainder) = index.div_rem_euclid(&slice_size);
+        let (y, x) = z_remainder.div_rem_euclid(&self.cells_per_row);
+        Vector3::<u32>::new(x, y, z)
+    }
 
+    pub fn position_from_index(&self, index: u32) -> Position {
         let scale_index =
             |i: u32| -> f32 { self.index_scale * ((2 * i + 1) as f32) - self.world_size };
+        let coords = self.coords_from_index(index);
         Position::new(
-            scale_index(x_index),
-            scale_index(y_index),
-            scale_index(z_index),
+            scale_index(coords.x),
+            scale_index(coords.y),
+            scale_index(coords.z),
         )
     }
 

@@ -3,7 +3,7 @@ use cgmath::{Point3, Vector3, Vector4};
 use num_traits::Float;
 use std::ops::{AddAssign, Deref, DerefMut};
 
-pub type Position = Point3<f32>;
+pub type Position = Vector3<f32>;
 pub type Velocity = Vector3<f32>;
 pub type Direction = Vector3<f32>;
 
@@ -58,7 +58,7 @@ pub fn Radians(rad: f32) -> Radians {
 impl Instance {
     pub fn to_raw(&self) -> InstanceRaw {
         InstanceRaw {
-            model: (cgmath::Matrix4::from_translation(self.position.to_vec())
+            model: (cgmath::Matrix4::from_translation(self.position)
                 * cgmath::Matrix4::from(self.rotation)
                 * cgmath::Matrix4::from_scale(self.scale))
             .into(),

@@ -1,7 +1,7 @@
 use crate::utility::*;
 use crate::world::World;
-use cgmath::SquareMatrix;
-use cgmath::{Angle, InnerSpace, MetricSpace};
+use cgmath::{Angle, EuclideanSpace, InnerSpace, MetricSpace};
+use cgmath::{Point3, SquareMatrix};
 use wgpu::hal::auxil::MAX_I32_BINDING_SIZE;
 
 struct Perspective {
@@ -103,7 +103,11 @@ impl Camera {
             right = Direction::new(1.0, 0.0, 0.0);
         }
         let up = right.cross(direction);
-        Mat4::look_at_rh(position, self.target, up)
+        Mat4::look_at_rh(
+            Point3::<f32>::from_vec(position),
+            Point3::<f32>::from_vec(self.target),
+            up,
+        )
     }
 
     pub fn projection_matrix(&self) -> Mat4 {

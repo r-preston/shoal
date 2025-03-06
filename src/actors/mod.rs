@@ -14,7 +14,8 @@ pub trait Actor {
     fn mutable_velocity(&mut self) -> &mut Velocity;
 
     fn update_position(&mut self) {
-        *self.mutable_position() = Position::from_vec(self.position().to_vec() + self.velocity());
+        let v = *self.velocity();
+        *self.mutable_position() += v;
     }
 
     // return distance of the Actor from the centre of the world

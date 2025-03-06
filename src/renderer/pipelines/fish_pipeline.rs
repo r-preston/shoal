@@ -8,6 +8,7 @@ use crate::renderer::{
 use crate::utility::{InstanceRaw, Mat3, Mat4, Position, Radians, Vec3, Vertex};
 use crate::world::World;
 use cgmath::{Rotation3, SquareMatrix};
+use rand::prelude::*;
 use wgpu::core::instance;
 use wgpu::util::DeviceExt;
 use wgpu::{BindGroupLayout, Device, Instance, Queue, SurfaceConfiguration};
@@ -84,11 +85,7 @@ impl Pipeline for FishPipeline {
             let instance = crate::utility::Instance {
                 scale: MODEL_SCALE,
                 position: *fish.position(),
-                rotation: cgmath::Quaternion::from_arc(
-                    Vec3::new(1.0, 0.0, 0.0),
-                    *fish.velocity(),
-                    Some(Vec3::new(1.0, 0.0, 0.0)),
-                ),
+                rotation: fish.direction_matrix(),
             };
             model_matrices.push(instance.to_raw());
         }

@@ -49,9 +49,9 @@ fn fs_main(in: VertexOutput) -> @location(0) vec4<f32> {
     let light_direction = vec3<f32>(0.146735, 0.146735, 0.978232);
     let base_colour = vec3<f32>(0.5);
 
-    let ambient_light = light_colour * 0.15;
+    let ambient_light = light_colour * 0.4;
 
-    let diffuse_light = light_colour * 0.5 * max(dot(in.world_normal, light_direction), 0.0);
+    let diffuse_light = light_colour * 0.4 * max(dot(in.world_normal, light_direction), 0.0);
 
     let view_direction = normalize(camera.pos - in.world_position.xyz);
     let reflected_light = reflect(-1.0 * light_direction, in.world_normal);

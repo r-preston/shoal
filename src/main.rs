@@ -23,7 +23,7 @@ use world::World;
 
 const WORLD_RADIUS: f32 = 10.0;
 const GRID_DIVISIONS: u32 = 15; // should be an odd number
-const FISH_COUNT: u32 = 10;
+const FISH_COUNT: u32 = 2000;
 const SHARK_COUNT: u32 = 0;
 
 fn main() {
@@ -36,32 +36,44 @@ fn main() {
         SHARK_COUNT,
     ));
     pollster::block_on(state.run());
-
-    let end = SystemTime::now();
-    log::info!(
-        "{} frames in {}ms ({} FPS)",
-        state.frame(),
-        SystemTime::now().duration_since(start).unwrap().as_millis(),
-        (state.frame() as f32)
-            / SystemTime::now()
-                .duration_since(start)
-                .unwrap()
-                .as_secs_f32()
-    );
 }
 
 struct State {
     world: World,
+    world_update_ready: bool,
     frame: u32,
+    start: Option<SystemTime>,
 }
 
 impl State {
     pub fn new(world: World) -> State {
-        Self { world, frame: 0 }
+        Self {
+            world,
+            world_update_ready: false,
+            frame: 0,
+            start: None,
+        }
     }
 
     pub fn frame(&self) -> u32 {
         self.frame
+    }
+
+    fn print_time_and_fps(&self) {
+        let start: SystemTime = match self.start {
+            Some(starttime) => starttime,
+            None => SystemTime::now(),
+        };
+        println!(
+            "{} frames in {}ms ({} FPS)",
+            self.frame,
+            SystemTime::now().duration_since(start).unwrap().as_millis(),
+            (self.frame as f32)
+                / SystemTime::now()
+                    .duration_since(start)
+                    .unwrap()
+                    .as_secs_f32()
+        );
     }
 
     #[cfg_attr(target_arch = "wasm32", wasm_bindgen(start))]
@@ -73,7 +85,8 @@ impl State {
 
         let mut renderer = Renderer::new(&window, &self.world).await;
 
-        let mut last_frame = SystemTime::now();
+        self.start = Some(SystemTime::now());
+        let mut last_draw_started_time = SystemTime::now();
         let _ = event_loop.run(move |event, control_flow| {
             match event {
                 Event::WindowEvent {
@@ -91,28 +104,34 @@ impl State {
                                         ..
                                     },
                                 ..
-                            } => control_flow.exit(),
+                            } => {
+                                self.print_time_and_fps();
+                                control_flow.exit()
+                            }
 
                             WindowEvent::Resized(physical_size) => {
                                 renderer.resize(*physical_size);
                             }
 
                             WindowEvent::RedrawRequested => 'RedrawLabel: {
-                                renderer.window().request_redraw();
-
-                                // limit to 60fps
-                                if SystemTime::now().duration_since(last_frame).unwrap()
-                                    < Duration::from_nanos(16666667)
-                                {
-                                    break 'RedrawLabel;
+                                if !self.world_update_ready {
+                                    // update simulation
+                                    self.world.update(self.frame);
+                                    // update buffers
+                                    renderer.update(&mut self.world);
+                                    self.world_update_ready = true;
                                 }
 
-                                self.frame += 1;
-                                last_frame = SystemTime::now();
-
-                                // update sim
-                                self.world.update(self.frame);
-                                renderer.update(&mut self.world);
+                                // limit to 60fps
+                                if SystemTime::now()
+                                    .duration_since(last_draw_started_time)
+                                    .unwrap()
+                                    < Duration::from_nanos(16666667)
+                                {
+                                    renderer.window().request_redraw();
+                                    break 'RedrawLabel;
+                                }
+                                last_draw_started_time = SystemTime::now();
 
                                 match renderer.render(&self.world) {
                                     Ok(_) => {}
@@ -133,14 +152,19 @@ impl State {
                                         log::warn!("Surface timeout")
                                     }
 
-                                    // This happens when the a frame takes too long to present
                                     Err(wgpu::SurfaceError::Other) => {
                                         log::warn!("Unexpected Surface error")
                                     }
                                 }
+
+                                self.frame += 1;
+                                self.world_update_ready = false; // world update rendered, allow State to update world again
+                                renderer.window().request_redraw();
                             }
 
-                            _ => {}
+                            _ => {
+                                renderer.window().request_redraw();
+                            }
                         }
                     }
                 }
